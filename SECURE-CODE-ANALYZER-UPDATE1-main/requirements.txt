@@ -1,5 +1,0 @@
-colorama
-jinja2
-flask
-flask-cors
--e .

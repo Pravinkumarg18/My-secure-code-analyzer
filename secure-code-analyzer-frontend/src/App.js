@@ -41,6 +41,7 @@ import {
 } from "@mui/icons-material";
 import axios from "axios";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
+import API_BASE_URL from "./config";  // ✅ import API base URL
 
 const SEVERITY_COLORS = {
   CRITICAL: { chip: "error", row: "#e6ccff" },
@@ -221,7 +222,7 @@ function App() {
   const loadReport = () => {
     setLoading(true);
     axios
-      .get("/reports/report.json")
+      .get(`${API_BASE_URL}/reports/report.json`)   // ✅ use API_BASE_URL
       .then((res) => {
         setIssues(res.data);
         setLoading(false);
@@ -266,7 +267,7 @@ function App() {
   const pagedIssues = filteredIssues.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleDownload = (format) => {
-    const url = `/reports/report.${format}`;
+    const url = `${API_BASE_URL}/reports/report.${format}`;   // ✅ use API_BASE_URL
     axios
       .get(url, { responseType: format === "html" ? "blob" : "text" })
       .then((res) => {
@@ -294,10 +295,10 @@ function App() {
     if (!selectedFile) return;
 
     const formData = new FormData();
-    formData.append("files", selectedFile); // ✅ backend expects "files"
+    formData.append("files", selectedFile);
 
     axios
-      .post("/scan", formData, { headers: { "Content-Type": "multipart/form-data" } })
+      .post(`${API_BASE_URL}/scan`, formData, { headers: { "Content-Type": "multipart/form-data" } })   // ✅ updated
       .then(() => {
         alert("✅ Scan completed. Report updated!");
         setSelectedFile(null);
@@ -342,11 +343,14 @@ function App() {
           variant="contained"
           startIcon={<RefreshIcon />}
           onClick={() => {
-            axios.post("/refresh").then(() => {
-              loadReport();
-            }).catch(err => {
-              console.error("Refresh failed", err);
-            });
+            axios
+              .post(`${API_BASE_URL}/refresh`)    // ✅ updated
+              .then(() => {
+                loadReport();
+              })
+              .catch((err) => {
+                console.error("Refresh failed", err);
+              });
           }}
         >
           Refresh
