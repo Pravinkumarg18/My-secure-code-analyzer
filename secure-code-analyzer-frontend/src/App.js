@@ -555,26 +555,40 @@ const handleDragEnter = (e) => {
   e.preventDefault();
   e.stopPropagation();
   setIsDragging(true);
+  // Add dragging class to the drop zone
+  const dropZone = e.currentTarget.closest('.drag-drop-zone');
+  if (dropZone) {
+    dropZone.classList.add('dragging');
+  }
 };
 
 const handleDragLeave = (e) => {
   e.preventDefault();
   e.stopPropagation();
   setIsDragging(false);
+  // Remove dragging class from the drop zone
+  const dropZone = e.currentTarget.closest('.drag-drop-zone');
+  if (dropZone) {
+    dropZone.classList.remove('dragging');
+  }
 };
 
 const handleDragOver = (e) => {
   e.preventDefault();
   e.stopPropagation();
-  if (e.dataTransfer.files) {
-    setIsDragging(true);
-  }
+  setIsDragging(true);
 };
 
 const handleDrop = (e) => {
   e.preventDefault();
   e.stopPropagation();
   setIsDragging(false);
+  
+  // Remove dragging class from the drop zone
+  const dropZone = e.currentTarget.closest('.drag-drop-zone');
+  if (dropZone) {
+    dropZone.classList.remove('dragging');
+  }
   
   const files = Array.from(e.dataTransfer.files);
   
@@ -596,6 +610,9 @@ const handleDrop = (e) => {
   }
 
   setSelectedFiles(prevFiles => [...prevFiles, ...validFiles]);
+};
+const handleDropZoneClick = () => {
+  document.getElementById('file-upload-input').click();
 };
    const handleFileUpload = async () => {
     if (selectedFiles.length === 0) {
@@ -942,97 +959,80 @@ security-scanner scan --all --output report.html`}
 {/* Upload Card */}
 {/* Upload Card */}
 <div className="dashboard-card upload-card">
-  <div className="card-icon">📁</div>
-  <h3>Upload & Reports</h3>
-  <p>Upload files for security analysis and vulnerability scanning</p>
-  
-  <div className="upload-status">
-    {isScanning ? (
-      <div className="scan-progress">
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${scanProgress}%` }}
-          ></div>
+
+
+  <div className="upload-section">
+    <h3>Upload Files or Folders</h3>
+    <div className="upload-area">
+      <div 
+  className="drag-drop-zone"
+  onClick={handleDropZoneClick}
+  onDragEnter={handleDragEnter}
+  onDragOver={handleDragOver}
+  onDragLeave={handleDragLeave}
+  onDrop={handleDrop}
+>
+        <div className="drop-content">
+          <span className="drop-icon">📁</span>
+          <p>Drag and drop files/folders here or click to select</p>
         </div>
-        <span>Scanning... {scanProgress}%</span>
+        <input 
+          type="file" 
+          id="file-upload-input"
+          onChange={handleFileSelect} 
+          className="file-input" 
+          multiple 
+        />
       </div>
-    ) : (
-      <span className="ready-text">Ready to scan</span>
-    )}
-  </div>
-
-  {/* Drag and Drop Area */}
-  <div 
-    className={`drop-zone ${isDragging ? 'dragging' : ''}`}
-    onDragEnter={handleDragEnter}
-    onDragOver={handleDragOver}
-    onDragLeave={handleDragLeave}
-    onDrop={handleDrop}
-  >
-    <div className="drop-content">
-      <span className="drop-icon">📁</span>
-      <p>Drag & Drop files here</p>
-      <span className="drop-or">or</span>
     </div>
-    
-    {/* File input - NO FORM TAGS */}
-    <div className="file-input-wrapper">
-      <label htmlFor="file-upload-input" className="upload-btn">
-        Choose File
-      </label>
-      <input 
-        type="file" 
-        id="file-upload-input"
-        onChange={handleFileSelect} 
-        className="file-input" 
-        multiple 
-      />
-    </div>
-  </div>
 
-  {selectedFiles.length > 0 && (
-    <div className="selected-files-list">
-      <p>Selected files ({selectedFiles.length}):</p>
-      <ul>
+    {selectedFiles.length > 0 && (
+      <div className="selected-files-section">
         {selectedFiles.map((file, index) => (
-          <li key={index}>{file.name}</li>
+          <div key={index} className="file-item">
+            <span className="file-icon">📄</span>
+            <span className="file-name">{file.name}</span>
+            <div className="file-actions">
+  <button 
+    type="button"
+    className="action-btn scan-btn" 
+    onClick={handleFileUpload}
+    disabled={isScanning}
+  >
+    Scan
+  </button>
+  <button 
+    type="button"
+    className="action-btn clear-btn" 
+    onClick={() => setSelectedFiles([])}
+    disabled={isScanning || selectedFiles.length === 0}
+  >
+    Clear
+  </button>
+</div>
+          </div>
         ))}
-      </ul>
-      
-      {/* Regular button - not in a form */}
-      <button 
-        type="button"
-        className="scan-btn" 
-        onClick={handleFileUpload}
-        disabled={isScanning}
-      >
-        {isScanning ? 'Scanning...' : 'Scan Files'}
-      </button>
-      
-      <button 
-        type="button" 
-        className="remove-all-btn" 
-        onClick={() => setSelectedFiles([])} 
-        disabled={isScanning}
-      >
-        Clear Files
-      </button>
+      </div>
+    )}
+
+    <div className="upload-status-section">
+      <div className="status-divider"></div>
+      <div className="upload-status">
+        <span className="status-text">Ready to scan</span>
+        <button 
+          type="button"
+          className="choose-file-btn"
+          onClick={() => document.getElementById('file-upload-input').click()}
+        >
+          Choose File
+        </button>
+      </div>
     </div>
-  )}
-  
-  {/* Report loading buttons */}
-  <div className="report-actions">
-    <button 
-      type="button"
-      className="load-report-btn"
-      onClick={loadReportFromFile}
-      disabled={isScanning}
-    >
-      📊 Load Latest Report
-    </button>
   </div>
+
+  {/* Filters Section - Moved inside upload card as shown in image */}
   
+
   {uploadError && (
     <div className="error-message">
       <span>⚠️</span> {uploadError}
@@ -2591,6 +2591,373 @@ security-scanner scan --all --output report.html`}
             padding: 16px;
           }
         }
+                  /* Drop Zone Styles */
+        .drop-zone {
+          border: 2px dashed #475569;
+          border-radius: 8px;
+          padding: 30px 20px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          margin-bottom: 20px;
+          background-color: rgba(51, 65, 85, 0.1);
+        }
+
+        .drop-zone.dragging {
+          border-color: #3b82f6;
+          background-color: rgba(59, 130, 246, 0.1);
+          transform: scale(1.02);
+        }
+
+        .drop-zone-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .drop-zone-icon {
+          font-size: 2.5rem;
+          opacity: 0.7;
+        }
+
+        .drop-zone-text {
+          font-weight: 500;
+          color: #e2e8f0;
+          margin: 0;
+        }
+
+        .drop-zone-subtext {
+          font-size: 0.875rem;
+          color: #94a3b8;
+          margin: 0;
+        }
+
+        /* Selected files list */
+        .selected-files-list ul {
+          list-style: none;
+          margin: 12px 0;
+          max-height: 150px;
+          overflow-y: auto;
+        }
+
+        .selected-files-list li {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background-color: #334155;
+          border-radius: 4px;
+          margin-bottom: 8px;
+          font-size: 0.875rem;
+        }
+
+        .remove-file-btn {
+          background: none;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          font-size: 1.2rem;
+          padding: 0;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+
+        .remove-file-btn:hover {
+          background-color: #475569;
+          color: #e2e8f0;
+        }
+
+        /* Light theme adjustments */
+        body.light .drop-zone {
+          border-color: #cbd5e1;
+          background-color: rgba(241, 245, 249, 0.5);
+        }
+
+        body.light .drop-zone.dragging {
+          border-color: #3b82f6;
+          background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        body.light .drop-zone-text {
+          color: #1e293b;
+        }
+
+        body.light .selected-files-list li {
+          background-color: #f1f5f9;
+        }
+          /* Upload Card Header */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #334155;
+}
+
+.card-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.file-name {
+  color: #3b82f6;
+  font-weight: 500;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+/* Upload Section */
+.upload-section h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #e2e8f0;
+}
+
+.drag-drop-zone {
+  border: 2px dashed #475569;
+  border-radius: 8px;
+  padding: 30px 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  margin-bottom: 20px;
+  background: rgba(71, 85, 105, 0.1);
+}
+
+.drag-drop-zone:hover {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.drag-drop-zone.dragging {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.drop-icon {
+  font-size: 2rem;
+  opacity: 0.7;
+}
+
+/* Selected Files Section */
+.selected-files-section {
+  margin-bottom: 20px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #334155;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.file-icon {
+  font-size: 1.2rem;
+}
+
+.file-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  border: 1px solid #475569;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #374151;
+}
+
+.action-btn.scan-btn {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.action-btn.scan-btn:hover:not(:disabled) {
+  background: #059669;
+}
+
+.action-btn.scan-btn:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+}
+
+/* Upload Status Section */
+.upload-status-section {
+  margin-top: 20px;
+}
+
+.status-divider {
+  height: 1px;
+  background: #334155;
+  margin: 20px 0;
+}
+
+.upload-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-text {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.choose-file-btn {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.choose-file-btn:hover {
+  background: #2563eb;
+}
+
+/* Compact Filters */
+.filters-section.compact {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #334155;
+}
+
+.filters-section.compact h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #e2e8f0;
+}
+
+.compact-filters {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+}
+
+/* Light theme adjustments */
+body.light .card-header {
+  border-bottom-color: #e2e8f0;
+}
+
+body.light .file-name {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+body.light .drag-drop-zone {
+  border-color: #e2e8f0;
+  background: rgba(241, 245, 249, 0.5);
+}
+
+body.light .drag-drop-zone:hover {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+body.light .file-item {
+  background: #f1f5f9;
+}
+
+body.light .action-btn {
+  background: white;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
+
+body.light .action-btn:hover {
+  background: #f8fafc;
+}
+
+body.light .status-divider {
+  background: #e2e8f0;
+}
+
+body.light .filters-section.compact {
+  border-top-color: #e2e8f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .compact-filters {
+    grid-template-columns: 1fr;
+  }
+  
+  .file-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .file-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .upload-status {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .choose-file-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .file-actions {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    width: 100%;
+  }
+}
       `}</style>
     </div>
   );

@@ -57,113 +57,282 @@ function downloadContent(filename, content, type) {
 function downloadJSON() {
   const content = `[
   {
+    "id": "PHP-EVAL-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 63,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "Use of eval() can lead to code injection.",
+    "suggestion": "Avoid eval(); use safer alternatives.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "eval($_GET['code']);",
+    "detected_by": "Regex"
+  },
+  {
     "id": "PHP-SYSTEM-EXEC-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 120,
+    "file": "uploads\\\\sample2.php",
+    "line": 27,
     "severity": "HIGH",
     "category": "Command Execution",
     "message": "Command execution can lead to injection if args are tainted.",
     "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "// 11. Unsafe use of exec() with user input",
+    "snippet": "if (isset($_GET['ping'])) {",
     "detected_by": "Regex"
   },
   {
     "id": "PHP-SYSTEM-EXEC-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 124,
+    "file": "uploads\\\\sample2.php",
+    "line": 107,
     "severity": "HIGH",
     "category": "Command Execution",
     "message": "Command execution can lead to injection if args are tainted.",
     "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "// Unsafe execution of user input",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-SYSTEM-EXEC-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 322,
-    "severity": "HIGH",
-    "category": "Command Execution",
-    "message": "Command execution can lead to injection if args are tainted.",
-    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
-    "owasp": "A03:2021-Injection",
-    "cwe": "",
-    "snippet": "<li>exec - exec() Injection</li>",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-CRYPTO-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 54,
-    "severity": "MEDIUM",
-    "category": "Weak Cryptography",
-    "message": "Weak hash algorithm used.",
-    "suggestion": "Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes.",
-    "owasp": "A02:2021-CryptographicFailures",
-    "cwe": "",
-    "snippet": "if (md5($password) === $stored_hash) {",
-    "detected_by": "Heuristic"
-  },
-  {
-    "id": "PHP-CRYPTO-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 114,
-    "severity": "MEDIUM",
-    "category": "Weak Cryptography",
-    "message": "Weak hash algorithm used.",
-    "suggestion": "Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes.",
-    "owasp": "A02:2021-CryptographicFailures",
-    "cwe": "",
-    "snippet": "if (md5($password) == $stored_hash) {",
-    "detected_by": "Heuristic"
-  },
-  {
-    "id": "PHP-MT-RAND-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 163,
-    "severity": "MEDIUM",
-    "category": "Weak Randomness",
-    "message": "Use of mt_rand() for security tokens is unsafe.",
-    "suggestion": "Use random_int() or random_bytes() instead.",
-    "owasp": "A02:2021-CryptographicFailures",
-    "cwe": "",
-    "snippet": "$token = mt_rand(); // Not cryptographically secure",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-SESSION-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 67,
-    "severity": "MEDIUM",
-    "category": "Session Management",
-    "message": "Cookie set without Secure/HttpOnly/SameSite flags.",
-    "suggestion": "Always set cookies with HttpOnly, Secure, and SameSite=strict.",
-    "owasp": "A07:2021-IdentificationandAuthenticationFailures",
-    "cwe": "",
-    "snippet": "setcookie(\\"user_data\\", base64_encode(serialize($_SESSION)), time()+3600, \\"/\\", \\"\\", false, false);",
+    "snippet": "class Test { public $cmd; function __wakeup(){ system($this->cmd); } }",
     "detected_by": "AST"
   },
   {
-    "id": "PHP-HEUR-021",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 74,
+    "id": "PHP-CRYPTO-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 141,
     "severity": "MEDIUM",
-    "category": "Superglobals",
-    "message": "Use of PHP superglobal $_REQUEST detected.",
-    "suggestion": "Use $_GET or $_POST explicitly and validate input.",
-    "owasp": "A01:2021-BrokenAccessControl",
+    "category": "Weak Cryptography",
+    "message": "Weak hash algorithm used.",
+    "suggestion": "Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes.",
+    "owasp": "A02:2021-CryptographicFailures",
     "cwe": "",
-    "snippet": "foreach ($_REQUEST as $key => $value) {",
+    "snippet": "$hash = md5($_POST['pwd']);",
     "detected_by": "Heuristic"
   },
   {
+    "id": "PHP-ERROR-LEAK-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 104,
+    "severity": "LOW",
+    "category": "Error Handling",
+    "message": "Leaking raw errors or phpinfo() reveals sensitive info.",
+    "suggestion": "Log errors server-side and show generic error messages.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "",
+    "snippet": "phpinfo();",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-MYSQL-LEGACY-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 20,
+    "severity": "HIGH",
+    "category": "Sql Injection",
+    "message": "Use of deprecated mysql_* API with untrusted input allows SQL Injection.",
+    "suggestion": "Migrate to mysqli or PDO with prepared statements.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "$res = mysql_query(\\"SELECT * FROM users WHERE id=$id\\"); // vuln: SQLi",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-SQL-TAINT",
+    "file": "uploads\\\\sample2.php",
+    "line": 73,
+    "severity": "CRITICAL",
+    "category": "Sql Injection",
+    "message": "User-controlled input flows into SQL query without sanitization.",
+    "suggestion": "Use prepared statements (parameterized queries).",
+    "owasp": "A03:2021-Injection",
+    "cwe": "CWE-89",
+    "snippet": "mysql_query(\\"UPDATE users SET email='{$_POST['email']}' WHERE id=1\\");",
+    "detected_by": "Regex+AST(Taint)"
+  },
+  {
+    "id": "PHP-MYSQL-LEGACY-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 92,
+    "severity": "HIGH",
+    "category": "Sql Injection",
+    "message": "Use of deprecated mysql_* API with untrusted input allows SQL Injection.",
+    "suggestion": "Migrate to mysqli or PDO with prepared statements.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "mysql_query(\\"INSERT INTO users (username, password) VALUES ('$u','$p')\\");",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-INCLUDE-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 32,
+    "severity": "HIGH",
+    "category": "File Inclusion",
+    "message": "Dynamic include/require detected. May allow LFI/RFI.",
+    "suggestion": "Never include user input in include/require paths. Use whitelists.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "if (isset($_GET['page'])) {",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-FILE-READ-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 44,
+    "severity": "HIGH",
+    "category": "Path Traversal",
+    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
+    "suggestion": "Avoid using unvalidated input in file_get_contents.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "echo file_get_contents(\\"uploads/\\" . $file);",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-FILE-READ-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 116,
+    "severity": "HIGH",
+    "category": "Path Traversal",
+    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
+    "suggestion": "Avoid using unvalidated input in file_get_contents.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "$ctx = stream_context_create([\\"ssl\\"=>[\\"verify_peer\\"=>false]]);",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-FILE-READ-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 134,
+    "severity": "HIGH",
+    "category": "Path Traversal",
+    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
+    "suggestion": "Avoid using unvalidated input in file_get_contents.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "$b = file_get_contents(\\"balance.txt\\");",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-UNSERIALIZE-AST-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 68,
+    "severity": "CRITICAL",
+    "category": "Insecure Deserialization",
+    "message": "unserialize() called in AST. Dangerous with untrusted input.",
+    "suggestion": "Avoid unserialize(); prefer JSON or validate inputs.",
+    "owasp": "A08:2021-SoftwareandDataIntegrityFailures",
+    "cwe": "",
+    "snippet": "$obj = unserialize($_POST['data']);",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PHP-UPLOAD-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 38,
+    "severity": "HIGH",
+    "category": "Insecure File Upload",
+    "message": "File upload without validation detected.",
+    "suggestion": "Validate file type, size, extension; randomize name; store outside web root.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "move_uploaded_file($_FILES['file']['tmp_name'], \\"uploads/\\" . $_FILES['file']['name']);",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-AUTH-CHECK-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 101,
+    "severity": "HIGH",
+    "category": "Broken Access Control",
+    "message": "Access control decision appears to be based on user input.",
+    "suggestion": "Enforce server-side authorization using session or token checks.",
+    "owasp": "A01:2021-BrokenAccessControl,A07:2021-IdentificationandAuthenticationFailures",
+    "cwe": "",
+    "snippet": "setcookie(\\"auth\\", $_GET['auth'] ?? \\"none\\");",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PHP-SQLI-002",
+    "file": "uploads\\\\sample2.php",
+    "line": 72,
+    "severity": "CRITICAL",
+    "category": "Sql Injection",
+    "message": "Potential SQL injection vulnerability",
+    "suggestion": "Use prepared statements or parameterized queries. Validate all inputs.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "CWE-89",
+    "snippet": "if (isset($_POST['updateEmail'])) {",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-AUTH-CHECK-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 83,
+    "severity": "HIGH",
+    "category": "Broken Access Control",
+    "message": "Access control decision appears to be based on user input.",
+    "suggestion": "Enforce server-side authorization using session or token checks.",
+    "owasp": "A01:2021-BrokenAccessControl",
+    "cwe": "",
+    "snippet": "if ($_GET['user'] == $admin_user && $_GET['pass'] == $admin_pass) {",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-HARDCODED-SECRET-002",
+    "file": "uploads\\\\sample2.php",
+    "line": 110,
+    "severity": "HIGH",
+    "category": "Insecure Design",
+    "message": "Hardcoded secret or token detected.",
+    "suggestion": "Use environment variables or a secrets manager.",
+    "owasp": "A04:2021-InsecureDesign",
+    "cwe": "",
+    "snippet": "$apiKey = \\"SECRET-API-KEY-123\\";",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-OUTDATED-MYSQL-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 14,
+    "severity": "HIGH",
+    "category": "Outdated Components",
+    "message": "Use of deprecated mysql_connect() detected.",
+    "suggestion": "Migrate to PDO or mysqli with prepared statements.",
+    "owasp": "A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "$conn = mysql_connect(\\"localhost\\", \\"root\\", \\"root\\");",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-SSRF-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 117,
+    "severity": "HIGH",
+    "category": "Ssrf",
+    "message": "Potential SSRF: fetching external URL without validation.",
+    "suggestion": "Validate and whitelist remote URLs before requesting.",
+    "owasp": "A10:2021-SSRF",
+    "cwe": "",
+    "snippet": "file_get_contents(\\"https://untrusted-site.com/data\\", false, $ctx);",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "php-header-injection",
+    "file": "uploads\\\\sample2.php",
+    "line": 78,
+    "severity": "HIGH",
+    "category": "Injection",
+    "message": "Unvalidated redirects via header() can lead to Open Redirect or CRLF Injection.",
+    "suggestion": "Sanitize and validate redirect URLs. Use a fixed set of allowed destinations.",
+    "owasp": "A01:2021-BrokenAccessControl",
+    "cwe": "",
+    "snippet": "header(\\"Location: \\" . $_GET['url']);",
+    "detected_by": "Regex"
+  },
+  {
     "id": "PHP-HEUR-023",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 64,
+    "file": "uploads\\\\sample2.php",
+    "line": 53,
     "severity": "LOW",
     "category": "Session Handling",
     "message": "Session start detected, ensure secure flags are set.",
@@ -174,29 +343,29 @@ function downloadJSON() {
     "detected_by": "Heuristic"
   },
   {
-    "id": "PHP-EXEC-AST-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 125,
+    "id": "PHP-SYSTEM-AST-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 28,
     "severity": "HIGH",
     "category": "Command Execution",
-    "message": "exec() detected in PHP AST; may allow command injection.",
-    "suggestion": "Avoid exec(); use safer built-in APIs.",
+    "message": "system() detected in PHP AST; may allow command injection.",
+    "suggestion": "Avoid system(); use safer built-in APIs.",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "exec(\\"ls -la \\" . $command, $output);",
+    "snippet": "system(\\"ping -c 1 \\" . $_GET['ping']);",
     "detected_by": "AST"
   },
   {
-    "id": "PHP-PREG-REPLACE-AST-001",
-    "file": "uploads\\\\deepseek_php.php",
-    "line": 147,
+    "id": "PHP-INCLUDE-AST-001",
+    "file": "uploads\\\\sample2.php",
+    "line": 33,
     "severity": "HIGH",
-    "category": "Dangerous Function",
-    "message": "preg_replace with /e modifier executes code \\u2192 RCE risk.",
-    "suggestion": "Use preg_replace_callback instead of /e.",
-    "owasp": "A03:2021-Injection",
+    "category": "File Inclusion",
+    "message": "Dynamic include/require detected.",
+    "suggestion": "Never use user input in include/require paths. Use whitelists.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
     "cwe": "",
-    "snippet": "$result = preg_replace('/\\\\{(\\\\w+)\\\\}/e', '$data[\\"$1\\"]', $template);",
+    "snippet": "include($_GET['page'] . \\".php\\");",
     "detected_by": "AST"
   }
 ]`;
@@ -210,7 +379,7 @@ function downloadHTML() {
 </head>
 <body>
 <h1>Secure Code Analyzer Report</h1>
-<small>Generated at: 2025-09-05 07:33:17 UTC</small>
+<small>Generated at: 2025-09-05 08:42:00 UTC</small>
 
 <div class="downloads">
   <button onclick="downloadJSON()">⬇ Download JSON</button>
@@ -230,13 +399,13 @@ function downloadHTML() {
   <label>OWASP:
     <select id="owaspFilter" onchange="filterTable()">
       <option value="ALL" selected>All</option>
-      <option value='A01:2021-BrokenAccessControl'>A01:2021-BrokenAccessControl</option><option value='A02:2021-CryptographicFailures'>A02:2021-CryptographicFailures</option><option value='A03:2021-Injection'>A03:2021-Injection</option><option value='A07:2021-IdentificationandAuthenticationFailures'>A07:2021-IdentificationandAuthenticationFailures</option>
+      <option value='A01:2021-BrokenAccessControl'>A01:2021-BrokenAccessControl</option><option value='A02:2021-CryptographicFailures'>A02:2021-CryptographicFailures</option><option value='A03:2021-Injection'>A03:2021-Injection</option><option value='A04:2021-InsecureDesign'>A04:2021-InsecureDesign</option><option value='A05:2021-SecurityMisconfiguration'>A05:2021-SecurityMisconfiguration</option><option value='A06:2021-VulnerableandOutdatedComponents'>A06:2021-VulnerableandOutdatedComponents</option><option value='A07:2021-IdentificationandAuthenticationFailures'>A07:2021-IdentificationandAuthenticationFailures</option><option value='A08:2021-SoftwareandDataIntegrityFailures'>A08:2021-SoftwareandDataIntegrityFailures</option><option value='A09:2021-SecurityLoggingandMonitoringFailures'>A09:2021-SecurityLoggingandMonitoringFailures</option><option value='A10:2021-SSRF'>A10:2021-SSRF</option>
     </select>
   </label>
   <label>CWE:
     <select id="cweFilter" onchange="filterTable()">
       <option value="ALL" selected>All</option>
-      
+      <option value='CWE-89'>CWE-89</option>
     </select>
   </label>
   <label>Search:
@@ -256,104 +425,260 @@ function downloadHTML() {
   <tbody id="tbody">
     
           <tr class="row-high">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">120</td>
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">63</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">PHP-EVAL-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Use of eval() can lead to code injection</td>
+            <td><code>eval($_GET[&#x27;code&#x27;]);</code></td>
+            <td>Avoid eval(); use safer alternatives</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">27</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>Command Execution</td>
             <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
             <td>Command execution can lead to injection if args are tainted</td>
-            <td><code>// 11. Unsafe use of exec() with user input</code></td>
+            <td><code>if (isset($_GET[&#x27;ping&#x27;])) {</code></td>
             <td>Avoid shell execution; use built-in APIs and strict validation</td>
             <td>Regex</td>
           </tr>
         
           <tr class="row-high">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">124</td>
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">107</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>Command Execution</td>
             <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
             <td>Command execution can lead to injection if args are tainted</td>
-            <td><code>// Unsafe execution of user input</code></td>
+            <td><code>class Test { public $cmd; function __wakeup(){ system($this-&gt;cmd); } }</code></td>
             <td>Avoid shell execution; use built-in APIs and strict validation</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">322</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Command Execution</td>
-            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>Command execution can lead to injection if args are tainted</td>
-            <td><code>&lt;li&gt;exec - exec() Injection&lt;/li&gt;</code></td>
-            <td>Avoid shell execution; use built-in APIs and strict validation</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-medium">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">54</td>
-            <td><span class="sev sev-medium">MEDIUM</span></td>
-            <td>Weak Cryptography</td>
-            <td class="rule-cell">PHP-CRYPTO-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
-            <td>Weak hash algorithm used</td>
-            <td><code>if (md5($password) === $stored_hash) {</code></td>
-            <td>Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes</td>
-            <td>Heuristic</td>
-          </tr>
-        
-          <tr class="row-medium">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">114</td>
-            <td><span class="sev sev-medium">MEDIUM</span></td>
-            <td>Weak Cryptography</td>
-            <td class="rule-cell">PHP-CRYPTO-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
-            <td>Weak hash algorithm used</td>
-            <td><code>if (md5($password) == $stored_hash) {</code></td>
-            <td>Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes</td>
-            <td>Heuristic</td>
-          </tr>
-        
-          <tr class="row-medium">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">163</td>
-            <td><span class="sev sev-medium">MEDIUM</span></td>
-            <td>Weak Randomness</td>
-            <td class="rule-cell">PHP-MT-RAND-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
-            <td>Use of mt_rand() for security tokens is unsafe</td>
-            <td><code>$token = mt_rand(); // Not cryptographically secure</code></td>
-            <td>Use random_int() or random_bytes() instead</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-medium">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">67</td>
-            <td><span class="sev sev-medium">MEDIUM</span></td>
-            <td>Session Management</td>
-            <td class="rule-cell">PHP-SESSION-001<br><span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
-            <td>Cookie set without Secure/HttpOnly/SameSite flags</td>
-            <td><code>setcookie(&quot;user_data&quot;, base64_encode(serialize($_SESSION)), time()+3600, &quot;/&quot;, &quot;&quot;, false, false);</code></td>
-            <td>Always set cookies with HttpOnly, Secure, and SameSite=strict</td>
             <td>AST</td>
           </tr>
         
           <tr class="row-medium">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">74</td>
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">141</td>
             <td><span class="sev sev-medium">MEDIUM</span></td>
-            <td>Superglobals</td>
-            <td class="rule-cell">PHP-HEUR-021<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
-            <td>Use of PHP superglobal $_REQUEST detected</td>
-            <td><code>foreach ($_REQUEST as $key =&gt; $value) {</code></td>
-            <td>Use $_GET or $_POST explicitly and validate input</td>
+            <td>Weak Cryptography</td>
+            <td class="rule-cell">PHP-CRYPTO-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Weak hash algorithm used</td>
+            <td><code>$hash = md5($_POST[&#x27;pwd&#x27;]);</code></td>
+            <td>Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes</td>
             <td>Heuristic</td>
           </tr>
         
           <tr class="row-low">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">64</td>
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">104</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Error Handling</td>
+            <td class="rule-cell">PHP-ERROR-LEAK-001<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span></td>
+            <td>Leaking raw errors or phpinfo() reveals sensitive info</td>
+            <td><code>phpinfo();</code></td>
+            <td>Log errors server-side and show generic error messages</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">20</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Sql Injection</td>
+            <td class="rule-cell">PHP-MYSQL-LEGACY-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Use of deprecated mysql_* API with untrusted input allows SQL Injection</td>
+            <td><code>$res = mysql_query(&quot;SELECT * FROM users WHERE id=$id&quot;); // vuln: SQLi</code></td>
+            <td>Migrate to mysqli or PDO with prepared statements</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">73</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Sql Injection</td>
+            <td class="rule-cell">PHP-SQL-TAINT<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-89</span></td>
+            <td>User-controlled input flows into SQL query without sanitization</td>
+            <td><code>mysql_query(&quot;UPDATE users SET email=&#x27;{$_POST[&#x27;email&#x27;]}&#x27; WHERE id=1&quot;);</code></td>
+            <td>Use prepared statements (parameterized queries)</td>
+            <td>Regex+AST(Taint)</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">92</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Sql Injection</td>
+            <td class="rule-cell">PHP-MYSQL-LEGACY-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Use of deprecated mysql_* API with untrusted input allows SQL Injection</td>
+            <td><code>mysql_query(&quot;INSERT INTO users (username, password) VALUES (&#x27;$u&#x27;,&#x27;$p&#x27;)&quot;);</code></td>
+            <td>Migrate to mysqli or PDO with prepared statements</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">32</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>File Inclusion</td>
+            <td class="rule-cell">PHP-INCLUDE-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>Dynamic include/require detected; May allow LFI/RFI</td>
+            <td><code>if (isset($_GET[&#x27;page&#x27;])) {</code></td>
+            <td>Never include user input in include/require paths; Use whitelists</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">44</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Path Traversal</td>
+            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
+            <td><code>echo file_get_contents(&quot;uploads/&quot; . $file);</code></td>
+            <td>Avoid using unvalidated input in file_get_contents</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">116</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Path Traversal</td>
+            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
+            <td><code>$ctx = stream_context_create([&quot;ssl&quot;=&gt;[&quot;verify_peer&quot;=&gt;false]]);</code></td>
+            <td>Avoid using unvalidated input in file_get_contents</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">134</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Path Traversal</td>
+            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
+            <td><code>$b = file_get_contents(&quot;balance.txt&quot;);</code></td>
+            <td>Avoid using unvalidated input in file_get_contents</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">68</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Insecure Deserialization</td>
+            <td class="rule-cell">PHP-UNSERIALIZE-AST-001<br><span class='tag owasp'>A08:2021-SoftwareandDataIntegrityFailures</span></td>
+            <td>unserialize() called in AST; Dangerous with untrusted input</td>
+            <td><code>$obj = unserialize($_POST[&#x27;data&#x27;]);</code></td>
+            <td>Avoid unserialize(); prefer JSON or validate inputs</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">38</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Insecure File Upload</td>
+            <td class="rule-cell">PHP-UPLOAD-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>File upload without validation detected</td>
+            <td><code>move_uploaded_file($_FILES[&#x27;file&#x27;][&#x27;tmp_name&#x27;], &quot;uploads/&quot; . $_FILES[&#x27;file&#x27;][&#x27;name&#x27;]);</code></td>
+            <td>Validate file type, size, extension; randomize name; store outside web root</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">101</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Broken Access Control</td>
+            <td class="rule-cell">PHP-AUTH-CHECK-001<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span> <span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
+            <td>Access control decision appears to be based on user input</td>
+            <td><code>setcookie(&quot;auth&quot;, $_GET[&#x27;auth&#x27;] ?? &quot;none&quot;);</code></td>
+            <td>Enforce server-side authorization using session or token checks</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">72</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Sql Injection</td>
+            <td class="rule-cell">PHP-SQLI-002<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-89</span></td>
+            <td>Potential SQL injection vulnerability</td>
+            <td><code>if (isset($_POST[&#x27;updateEmail&#x27;])) {</code></td>
+            <td>Use prepared statements or parameterized queries; Validate all inputs</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">83</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Broken Access Control</td>
+            <td class="rule-cell">PHP-AUTH-CHECK-001<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
+            <td>Access control decision appears to be based on user input</td>
+            <td><code>if ($_GET[&#x27;user&#x27;] == $admin_user &amp;&amp; $_GET[&#x27;pass&#x27;] == $admin_pass) {</code></td>
+            <td>Enforce server-side authorization using session or token checks</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">110</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Insecure Design</td>
+            <td class="rule-cell">PHP-HARDCODED-SECRET-002<br><span class='tag owasp'>A04:2021-InsecureDesign</span></td>
+            <td>Hardcoded secret or token detected</td>
+            <td><code>$apiKey = &quot;SECRET-API-KEY-123&quot;;</code></td>
+            <td>Use environment variables or a secrets manager</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">14</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Outdated Components</td>
+            <td class="rule-cell">PHP-OUTDATED-MYSQL-001<br><span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>Use of deprecated mysql_connect() detected</td>
+            <td><code>$conn = mysql_connect(&quot;localhost&quot;, &quot;root&quot;, &quot;root&quot;);</code></td>
+            <td>Migrate to PDO or mysqli with prepared statements</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">117</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Ssrf</td>
+            <td class="rule-cell">PHP-SSRF-001<br><span class='tag owasp'>A10:2021-SSRF</span></td>
+            <td>Potential SSRF: fetching external URL without validation</td>
+            <td><code>file_get_contents(&quot;https://untrusted-site.com/data&quot;, false, $ctx);</code></td>
+            <td>Validate and whitelist remote URLs before requesting</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">78</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Injection</td>
+            <td class="rule-cell">php-header-injection<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
+            <td>Unvalidated redirects via header() can lead to Open Redirect or CRLF Injection</td>
+            <td><code>header(&quot;Location: &quot; . $_GET[&#x27;url&#x27;]);</code></td>
+            <td>Sanitize and validate redirect URLs; Use a fixed set of allowed destinations</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">53</td>
             <td><span class="sev sev-low">LOW</span></td>
             <td>Session Handling</td>
             <td class="rule-cell">PHP-HEUR-023<br><span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
@@ -364,26 +689,26 @@ function downloadHTML() {
           </tr>
         
           <tr class="row-high">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">125</td>
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">28</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>Command Execution</td>
-            <td class="rule-cell">PHP-EXEC-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>exec() detected in PHP AST; may allow command injection</td>
-            <td><code>exec(&quot;ls -la &quot; . $command, $output);</code></td>
-            <td>Avoid exec(); use safer built-in APIs</td>
+            <td class="rule-cell">PHP-SYSTEM-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>system() detected in PHP AST; may allow command injection</td>
+            <td><code>system(&quot;ping -c 1 &quot; . $_GET[&#x27;ping&#x27;]);</code></td>
+            <td>Avoid system(); use safer built-in APIs</td>
             <td>AST</td>
           </tr>
         
           <tr class="row-high">
-            <td>uploads\deepseek_php.php</td>
-            <td style="text-align:right">147</td>
+            <td>uploads\sample2.php</td>
+            <td style="text-align:right">33</td>
             <td><span class="sev sev-high">HIGH</span></td>
-            <td>Dangerous Function</td>
-            <td class="rule-cell">PHP-PREG-REPLACE-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>preg_replace with /e modifier executes code → RCE risk</td>
-            <td><code>$result = preg_replace(&#x27;/\{(\w+)\}/e&#x27;, &#x27;$data[&quot;$1&quot;]&#x27;, $template);</code></td>
-            <td>Use preg_replace_callback instead of /e</td>
+            <td>File Inclusion</td>
+            <td class="rule-cell">PHP-INCLUDE-AST-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>Dynamic include/require detected</td>
+            <td><code>include($_GET[&#x27;page&#x27;] . &quot;.php&quot;);</code></td>
+            <td>Never use user input in include/require paths; Use whitelists</td>
             <td>AST</td>
           </tr>
         
