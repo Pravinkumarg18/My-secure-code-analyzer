@@ -1,5 +1,8 @@
+# No external dependencies required.
 colorama
 jinja2
 flask
 flask-cors
 -e .
+astpretty
+javalang

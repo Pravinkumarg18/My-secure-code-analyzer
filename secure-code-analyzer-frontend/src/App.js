@@ -15,8 +15,8 @@ const SEVERITY_COLORS = {
 const FILE_EXTENSIONS = {
   PYTHON: [".py"],
   JAVASCRIPT: [".js", ".jsx"],
-  HTML: [".html", ".htm"],
-  PHP: [".php"]
+  PHP: [".php"],
+  JAVA: [".java"],
 };
 
 const OWASP_VULNERABILITIES = [
@@ -522,7 +522,6 @@ useEffect(() => {
 }, [isRefreshing]);
 
 const handleFileSelect = (event) => {
-  // The most important line - prevent default behavior
   if (event && event.preventDefault) {
     event.preventDefault();
   }
@@ -533,16 +532,18 @@ const handleFileSelect = (event) => {
     return;
   }
 
-  // Validate file types
+  // Validate file types - ADDED JAVA AND PYTHON
   const validFiles = files.filter(file => {
     const fileName = file.name.toLowerCase();
     return fileName.endsWith('.js') || 
            fileName.endsWith('.php') || 
+           fileName.endsWith('.java') ||  // ADDED
+           fileName.endsWith('.py') ||    // ADDED
            fileName.endsWith('.zip');
   });
 
   if (validFiles.length === 0) {
-    setUploadError('Please select .js, .php, or .zip files only.');
+    setUploadError('Please select .js, .php, .java, .py, or .zip files only.');
     return;
   }
 
@@ -596,16 +597,18 @@ const handleDrop = (e) => {
     return;
   }
 
-  // Validate file types
+  // Validate file types - ADDED JAVA AND PYTHON
   const validFiles = files.filter(file => {
     const fileName = file.name.toLowerCase();
     return fileName.endsWith('.js') || 
            fileName.endsWith('.php') || 
+           fileName.endsWith('.java') ||  // ADDED
+           fileName.endsWith('.py') ||    // ADDED
            fileName.endsWith('.zip');
   });
 
   if (validFiles.length === 0) {
-    setUploadError('Please select .js, .php, or .zip files only.');
+    setUploadError('Please select .js, .php, .java, .py, or .zip files only.');
     return;
   }
 
@@ -973,9 +976,10 @@ security-scanner scan --all --output report.html`}
   onDrop={handleDrop}
 >
         <div className="drop-content">
-          <span className="drop-icon">📁</span>
-          <p>Drag and drop files/folders here or click to select</p>
-        </div>
+  <span className="drop-icon">📁</span>
+  <p>Drag and drop files/folders here or click to select</p>
+  <p className="drop-zone-subtext">Supports .js, .php, .java, .py, and .zip files</p>
+</div>
         <input 
           type="file" 
           id="file-upload-input"
@@ -1034,10 +1038,10 @@ security-scanner scan --all --output report.html`}
   
 
   {uploadError && (
-    <div className="error-message">
-      <span>⚠️</span> {uploadError}
-    </div>
-  )}
+  <div className="error-message">
+    <span>⚠️</span> {uploadError}
+  </div>
+)}
 </div>
           {/* Results Card */}
           <div className="dashboard-card results-card">
@@ -1439,6 +1443,11 @@ security-scanner scan --all --output report.html`}
           color: #e2e8f0;
           transition: background-color 0.3s ease;
         }
+          .drop-zone-subtext {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
 
         body.light {
           background-color: #f8fafc;

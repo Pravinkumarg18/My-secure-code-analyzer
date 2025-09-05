@@ -1,6 +1,8 @@
 import argparse
 import os
 import sys
+import zipfile
+import shutil
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -9,28 +11,28 @@ from secure_code_analyzer.core.reporters import (
     generate_json_report,
     generate_html_report,
 )
-import zipfile
-import io
-import shutil
 
 # Default reports directory
 REPORTS_DIR = os.path.abspath("reports")
 
+# Supported file extensions (combined from both versions)
+SUPPORTED_EXTENSIONS = (".js", ".php", ".py", ".java")
+
 
 def collect_files(paths):
     """
-    Collect all .js and .php files from given paths.
+    Collect all supported files (.js, .php, .py, .java) from given paths.
     Supports both individual files and directories.
     """
     files = []
     for path in paths:
         if os.path.isfile(path):
-            if path.endswith((".js", ".php")):
+            if path.endswith(SUPPORTED_EXTENSIONS):
                 files.append(path)
         elif os.path.isdir(path):
             for root, _, filenames in os.walk(path):
                 for fname in filenames:
-                    if fname.endswith((".js", ".php")):
+                    if fname.endswith(SUPPORTED_EXTENSIONS):
                         files.append(os.path.join(root, fname))
         else:
             print(f"[WARNING] {path} does not exist, skipping.")
@@ -69,7 +71,7 @@ def cli_mode(args):
     """Run in classic CLI mode."""
     files_to_scan = collect_files(args.targets)
     if not files_to_scan:
-        print("❌ No .js or .php files found to scan.")
+        print(f"❌ No {', '.join(SUPPORTED_EXTENSIONS)} files found to scan.")
         sys.exit(1)
 
     all_issues = run_scan(files_to_scan)
@@ -115,43 +117,38 @@ def serve_mode():
             # Normalize path to prevent directory traversal attacks
             safe_path = os.path.normpath(filename)
             if safe_path.startswith("..") or os.path.isabs(safe_path):
-                # Reject files with unsafe paths
-                continue
+                continue  # Reject unsafe filenames
 
-            # Check if file is a ZIP archive by extension
             if safe_path.lower().endswith(".zip"):
-                # Extract ZIP contents to uploads directory
+                # Extract ZIP safely
                 try:
                     with zipfile.ZipFile(f) as zip_ref:
-                        # Extract each file ensuring directories exist
                         for member in zip_ref.namelist():
                             member_path = os.path.normpath(member)
                             if member_path.startswith("..") or os.path.isabs(member_path):
                                 continue
                             target_path = os.path.join("uploads", member_path)
-                            # Ensure parent directories exist before writing file
                             os.makedirs(os.path.dirname(target_path), exist_ok=True)
                             with zip_ref.open(member) as source, open(target_path, "wb") as target:
                                 target.write(source.read())
                 except Exception as e:
                     return jsonify({"error": f"Failed to extract ZIP: {e}"}), 400
             else:
+                # Save normal file
                 path = os.path.join("uploads", safe_path)
-                # Ensure parent directories exist before saving file
                 parent_dir = os.path.dirname(path)
                 if parent_dir and not os.path.exists(parent_dir):
                     os.makedirs(parent_dir, exist_ok=True)
-                # Save file in binary mode
                 with open(path, "wb") as out_file:
                     out_file.write(f.read())
                 filepaths.append(path)
 
-        # After saving all files, collect all .js and .php files recursively
+        # Collect all supported files recursively from uploads
         filepaths.extend(collect_files(["uploads"]))
 
         issues = run_scan(filepaths)
 
-        # Save reports for frontend
+        # Save reports
         os.makedirs(REPORTS_DIR, exist_ok=True)
         json_path = os.path.join(REPORTS_DIR, "report.json")
         html_path = os.path.join(REPORTS_DIR, "report.html")
@@ -172,9 +169,7 @@ def serve_mode():
         if not os.path.exists(upload_dir):
             return jsonify({"error": "No uploaded files to rescan"}), 400
 
-        filepaths = [
-            os.path.join(upload_dir, f) for f in os.listdir(upload_dir)
-        ]
+        filepaths = collect_files([upload_dir])
         issues = run_scan(filepaths)
 
         # Save updated reports

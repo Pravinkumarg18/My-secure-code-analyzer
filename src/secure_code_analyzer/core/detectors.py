@@ -2,6 +2,7 @@ import re
 import json
 import os
 import subprocess
+import sys
 
 # ========================
 # Load rules from rules.json
@@ -22,19 +23,32 @@ PROJECT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..")
 )
 
-JS_AST_RUNNER = os.path.join(PROJECT_ROOT, "js_ast_runner.js")
-PHP_AST_RUNNER = os.path.join(PROJECT_ROOT, "php_ast_runner.js")
+JS_AST_RUNNER     = os.path.join(PROJECT_ROOT, "js_ast_runner.js")
+PHP_AST_RUNNER    = os.path.join(PROJECT_ROOT, "php_ast_runner.js")
+PY_AST_RUNNER     = os.path.join(PROJECT_ROOT, "python_ast_runner.py")
+JAVA_AST_RUNNER   = os.path.join(PROJECT_ROOT, "java_ast_runner.py")
 
 print("JS_AST_RUNNER:", JS_AST_RUNNER)
 print("PHP_AST_RUNNER:", PHP_AST_RUNNER)
+print("PY_AST_RUNNER:", PY_AST_RUNNER)
+print("JAVA_AST_RUNNER:", JAVA_AST_RUNNER)
 
 # ========================
 # AST Runner Helper
 # ========================
-def run_node_ast_runner(runner, code, ast_rules):
+def run_ast_runner(runner, code, ast_rules, lang):
+    """
+    Run AST helper. 
+    Node.js for JS/PHP, Python for Python/Java.
+    """
     try:
+        if lang in ["javascript", "php"]:
+            cmd = ["node", runner]
+        else:  # python, java
+            cmd = [sys.executable, runner]
+
         proc = subprocess.run(
-            ["node", runner],
+            cmd,
             input=json.dumps({"code": code, "rules": ast_rules}).encode("utf-8"),
             capture_output=True,
             check=True
@@ -94,7 +108,13 @@ def normalize_category(cat):
 def run_detectors(code, file_path):
     issues = []
 
-    lang = "javascript" if file_path.endswith(".js") else "php" if file_path.endswith(".php") else None
+    lang = (
+        "javascript" if file_path.endswith(".js") else
+        "php" if file_path.endswith(".php") else
+        "python" if file_path.endswith(".py") else
+        "java" if file_path.endswith(".java") else
+        None
+    )
     if not lang:
         return issues
 
@@ -103,6 +123,13 @@ def run_detectors(code, file_path):
     ast_rules         = [r for r in RULES if r["language"] == lang and r["type"] == "ast"]
     context_ast_rules = [r for r in RULES if r["language"] == lang and r["type"] == "context-ast"]
     taint_ast_rules   = [r for r in RULES if r["language"] == lang and r["type"] == "taint-ast"]
+
+    runner_map = {
+        "javascript": JS_AST_RUNNER,
+        "php": PHP_AST_RUNNER,
+        "python": PY_AST_RUNNER,
+        "java": JAVA_AST_RUNNER
+    }
 
     def make_issue(rule, line_no, snippet, detected_by):
         return {
@@ -133,8 +160,7 @@ def run_detectors(code, file_path):
 
     # --- AST ---
     if ast_rules:
-        runner = JS_AST_RUNNER if lang == "javascript" else PHP_AST_RUNNER
-        result = run_node_ast_runner(runner, code, ast_rules)
+        result = run_ast_runner(runner_map[lang], code, ast_rules, lang)
         if "error" not in result:
             for rule in ast_rules:
                 for line_no in result.get(rule["id"], []):
@@ -142,8 +168,7 @@ def run_detectors(code, file_path):
 
     # --- Context-AST ---
     if context_ast_rules:
-        runner = JS_AST_RUNNER if lang == "javascript" else PHP_AST_RUNNER
-        result = run_node_ast_runner(runner, code, context_ast_rules)
+        result = run_ast_runner(runner_map[lang], code, context_ast_rules, lang)
         if "error" not in result:
             for rule in context_ast_rules:
                 for line_no in result.get(rule["id"], []):
@@ -151,8 +176,7 @@ def run_detectors(code, file_path):
 
     # --- Taint-AST ---
     if taint_ast_rules:
-        runner = JS_AST_RUNNER if lang == "javascript" else PHP_AST_RUNNER
-        result = run_node_ast_runner(runner, code, taint_ast_rules)
+        result = run_ast_runner(runner_map[lang], code, taint_ast_rules, lang)
         if "error" not in result:
             for rule in taint_ast_rules:
                 for line_no in result.get(rule["id"], []):
@@ -174,13 +198,11 @@ def run_detectors(code, file_path):
             else:
                 merged = existing
 
-            # Merge OWASP & CWE
             merged["owasp"] = ",".join(sorted(normalize_owasp(existing.get("owasp", "")) |
                                               normalize_owasp(issue.get("owasp", ""))))
             merged["cwe"]   = ",".join(sorted(normalize_cwe(existing.get("cwe", "")) |
                                               normalize_cwe(issue.get("cwe", ""))))
 
-            # Priority for detector type
             detected_set = set(existing["detected_by"].split("+")) | set(issue["detected_by"].split("+"))
             if "Context-AST" in detected_set:
                 merged["detected_by"] = "Context-AST"

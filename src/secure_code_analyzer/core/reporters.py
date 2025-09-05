@@ -14,8 +14,8 @@ SEVERITY_COLOR = {
     "LOW": "#d9edf7"
 }
 
-# === Configure this to your React frontend public reports folder ===
-FRONTEND_REPORTS_DIR = "secure-code-analyzer-frontend/public/reports"
+# === Configure this to your React frontend public reports folder absolute path ===
+FRONTEND_REPORTS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'secure-code-analyzer-frontend', 'public', 'reports')
 
 
 def save_report_to_backend_and_frontend(content: str, backend_path: str, filename: str):
@@ -117,6 +117,20 @@ def generate_html_report(issues, out_path):
 
     cwe_opts = "".join([f"<option value='{t}'>{t}</option>" for t in sorted(cwe_tags)])
 
+    # --- File Type normalization & dedup ---
+    file_types = set()
+    ext_map = {"js": "JavaScript", "php": "PHP", "java": "Java", "py": "Python"}
+    for i in deduped_issues:
+        file = i.get("file", "")
+        ext = os.path.splitext(file)[1].lstrip(".").lower()
+        if ext in ext_map:
+            file_types.add(ext)
+
+    filetype_opts = "".join([
+        f"<option value='{ft}'>{ext_map.get(ft, ft.upper())}</option>"
+        for ft in sorted(file_types)
+    ])
+
     # --- Render issues into rows ---
     rows = []
     for i in deduped_issues:
@@ -194,6 +208,7 @@ function filterTable() {{
   const severity = document.getElementById('sevFilter').value;
   const owasp = document.getElementById('owaspFilter').value;
   const cwe = document.getElementById('cweFilter').value;
+  const fileType = document.getElementById('fileTypeFilter').value;
   const q = document.getElementById('searchBox').value.toLowerCase();
 
   const tbody = document.getElementById('tbody');
@@ -201,13 +216,15 @@ function filterTable() {{
     const sev = r.querySelector('.sev').textContent.trim().toUpperCase();
     const text = r.textContent.toLowerCase();
     const ruleText = r.querySelector('.rule-cell').textContent;
+    const fileName = r.querySelector('td').textContent.toLowerCase();
 
     const okSev = (severity === 'ALL' || sev === severity);
     const okOwasp = (owasp === 'ALL' || ruleText.includes(owasp));
     const okCwe = (cwe === 'ALL' || ruleText.includes(cwe));
+    const okFileType = (fileType === 'ALL' || fileName.endsWith('.' + fileType));
     const okSearch = text.includes(q);
 
-    r.style.display = (okSev && okOwasp && okCwe && okSearch) ? '' : 'none';
+    r.style.display = (okSev && okOwasp && okCwe && okFileType && okSearch) ? '' : 'none';
   }});
 }}
 
@@ -250,15 +267,21 @@ function downloadHTML() {{
     </select>
   </label>
   <label>OWASP:
-    <select id="owaspFilter" onchange="filterTable()">
-      <option value="ALL" selected>All</option>
+    <select id='owaspFilter' onchange='filterTable()'>
+      <option value='ALL' selected>All</option>
       {owasp_opts}
     </select>
   </label>
   <label>CWE:
-    <select id="cweFilter" onchange="filterTable()">
-      <option value="ALL" selected>All</option>
+    <select id='cweFilter' onchange='filterTable()'>
+      <option value='ALL' selected>All</option>
       {cwe_opts}
+    </select>
+  </label>
+  <label>File Type:
+    <select id='fileTypeFilter' onchange='filterTable()'>
+      <option value='ALL' selected>All</option>
+      {filetype_opts}
     </select>
   </label>
   <label>Search:

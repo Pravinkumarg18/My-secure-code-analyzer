@@ -1,0 +1,17 @@
+LICENSE
+README.md
+setup.py
+src/secure_code_analyzer/__init__.py
+src/secure_code_analyzer/cli.py
+src/secure_code_analyzer.egg-info/PKG-INFO
+src/secure_code_analyzer.egg-info/SOURCES.txt
+src/secure_code_analyzer.egg-info/dependency_links.txt
+src/secure_code_analyzer.egg-info/entry_points.txt
+src/secure_code_analyzer.egg-info/top_level.txt
+src/secure_code_analyzer/core/__init__.py
+src/secure_code_analyzer/core/detectors.py
+src/secure_code_analyzer/core/reporters.py
+src/secure_code_analyzer/core/scanner.py
+src/secure_code_analyzer/core/severity.py
+src/secure_code_analyzer/core/utils.py
+tests/test_basic.py

@@ -28,6 +28,7 @@ function filterTable() {
   const severity = document.getElementById('sevFilter').value;
   const owasp = document.getElementById('owaspFilter').value;
   const cwe = document.getElementById('cweFilter').value;
+  const fileType = document.getElementById('fileTypeFilter').value;
   const q = document.getElementById('searchBox').value.toLowerCase();
 
   const tbody = document.getElementById('tbody');
@@ -35,13 +36,15 @@ function filterTable() {
     const sev = r.querySelector('.sev').textContent.trim().toUpperCase();
     const text = r.textContent.toLowerCase();
     const ruleText = r.querySelector('.rule-cell').textContent;
+    const fileName = r.querySelector('td').textContent.toLowerCase();
 
     const okSev = (severity === 'ALL' || sev === severity);
     const okOwasp = (owasp === 'ALL' || ruleText.includes(owasp));
     const okCwe = (cwe === 'ALL' || ruleText.includes(cwe));
+    const okFileType = (fileType === 'ALL' || fileName.endsWith('.' + fileType));
     const okSearch = text.includes(q);
 
-    r.style.display = (okSev && okOwasp && okCwe && okSearch) ? '' : 'none';
+    r.style.display = (okSev && okOwasp && okCwe && okFileType && okSearch) ? '' : 'none';
   });
 }
 
@@ -57,113 +60,1309 @@ function downloadContent(filename, content, type) {
 function downloadJSON() {
   const content = `[
   {
-    "id": "PHP-EVAL-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 63,
+    "id": "JS-EVAL-001",
+    "file": "samples/js/app.js",
+    "line": 20,
+    "severity": "CRITICAL",
+    "category": "Code Injection",
+    "message": "Use of eval() can lead to code execution.",
+    "suggestion": "Avoid eval(); use safe parsers or functions.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "CWE-95",
+    "snippet": "eval(req.query.code); // code injection",
+    "detected_by": "Context-AST+AST(Taint)"
+  },
+  {
+    "id": "js-child-process-exec",
+    "file": "samples/js/app.js",
+    "line": 12,
+    "severity": "CRITICAL",
+    "category": "Code-Execution",
+    "message": "Use of child_process.exec() with user input may allow remote command execution.",
+    "suggestion": "Use safer alternatives like execFile with strict input validation.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "CWE-78",
+    "snippet": "child_process.exec('ls ' + req.query.dir); // command injection",
+    "detected_by": "Context-AST+AST(Taint)"
+  },
+  {
+    "id": "JS-DOMXSS-AST-001",
+    "file": "samples/js/app.js",
+    "line": 31,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input flows into innerHTML assignment \\u2192 DOM XSS.",
+    "suggestion": "Use textContent or sanitize with DOMPurify.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "document.body.innerHTML = req.query.html; // XSS in client-side route (demo)",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-CTX-002",
+    "file": "samples/js/app.js",
+    "line": 7,
+    "severity": "CRITICAL",
+    "category": "Code Injection",
+    "message": "Dangerous dynamic code execution (Function, setTimeout, setInterval) with untrusted input.",
+    "suggestion": "Avoid passing untrusted input to code execution APIs. Validate or remove such usage.",
+    "owasp": "A02:2021-CryptographicFailures,A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const h = crypto.createHash('md5').update(req.query.q || 'x').digest('hex');",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 1,
     "severity": "HIGH",
     "category": "Dangerous Function",
-    "message": "Use of eval() can lead to code injection.",
-    "suggestion": "Avoid eval(); use safer alternatives.",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "eval($_GET['code']);",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-SYSTEM-EXEC-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 27,
-    "severity": "HIGH",
-    "category": "Command Execution",
-    "message": "Command execution can lead to injection if args are tainted.",
-    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
-    "owasp": "A03:2021-Injection",
-    "cwe": "",
-    "snippet": "if (isset($_GET['ping'])) {",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-SYSTEM-EXEC-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 107,
-    "severity": "HIGH",
-    "category": "Command Execution",
-    "message": "Command execution can lead to injection if args are tainted.",
-    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
-    "owasp": "A03:2021-Injection",
-    "cwe": "",
-    "snippet": "class Test { public $cmd; function __wakeup(){ system($this->cmd); } }",
+    "snippet": "const express = require('express');",
     "detected_by": "AST"
   },
   {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 3,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const crypto = require('crypto');",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 4,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const child_process = require('child_process');",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 6,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "app.get('/hash', (req, res) => {",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 11,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "app.get('/run', (req, res) => {",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 13,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "res.send(\\"ok\\");",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 19,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "app.get('/eval', (req, res) => {",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 21,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "res.send(\\"done\\");",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 24,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "app.get('/search', (req, res) => {",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 27,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "res.send(\\"searching\\");",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 30,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "app.get('/xss', (req, res) => {",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app.js",
+    "line": 32,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "res.send(\\"done\\");",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-CONSOLE-001",
+    "file": "samples/js/app2.js",
+    "line": 6,
+    "severity": "LOW",
+    "category": "Information Disclosure",
+    "message": "Console logging detected",
+    "suggestion": "Remove console statements in production.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures,A10:2021-Logging&MonitoringFailures",
+    "cwe": "CWE-200",
+    "snippet": "console.log(\\"Admin section visible!\\"); // BAD: client-side auth check",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "JS-CONSOLE-001",
+    "file": "samples/js/app2.js",
+    "line": 32,
+    "severity": "LOW",
+    "category": "Information Disclosure",
+    "message": "Console logging detected",
+    "suggestion": "Remove console statements in production.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures,A10:2021-Logging&MonitoringFailures",
+    "cwe": "CWE-200",
+    "snippet": "console.log(\\"Debug: reached end of app2.js\\");*/",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "JS-CLIENT-AUTH-001",
+    "file": "samples/js/app2.js",
+    "line": 5,
+    "severity": "MEDIUM",
+    "category": "Broken Access Control",
+    "message": "Authorization logic found in client-side code. This can be bypassed.",
+    "suggestion": "Do not rely on client-side authorization checks.",
+    "owasp": "A01:2021-BrokenAccessControl",
+    "cwe": "",
+    "snippet": "if (user.role === \\"admin\\") {",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "JS-DISABLE-CSP-001",
+    "file": "samples/js/app2.js",
+    "line": 13,
+    "severity": "HIGH",
+    "category": "Insecure Design",
+    "message": "CSP with unsafe-inline detected. This weakens XSS protection.",
+    "suggestion": "Avoid unsafe-inline; use nonces or hashes in CSP.",
+    "owasp": "A04:2021-InsecureDesign",
+    "cwe": "",
+    "snippet": "const cspHeader = \\"Content-Security-Policy: default-src 'self' 'unsafe-inline'\\";",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "JS-JQUERY-OLD-001",
+    "file": "samples/js/app2.js",
+    "line": 19,
+    "severity": "MEDIUM",
+    "category": "Outdated Components",
+    "message": "Old jQuery version detected. Likely vulnerable to XSS.",
+    "suggestion": "Upgrade to latest jQuery version.",
+    "owasp": "A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "const jqueryVer = \\"jquery-1.12.4.min.js\\";",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "GEN-HEUR-014",
+    "file": "samples/js/app2.js",
+    "line": 25,
+    "severity": "MEDIUM",
+    "category": "Hardcoded Urls",
+    "message": "Use of insecure HTTP URL.",
+    "suggestion": "Always use HTTPS instead of HTTP.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "const userUrl = \\"http://\\" + window.location.search.replace(\\"?url=\\", \\"\\");",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "JS-XSS-001",
+    "file": "samples/js/app3.js",
+    "line": 10,
+    "severity": "HIGH",
+    "category": "Cross-Site Scripting",
+    "message": "Possible DOM-based XSS via unsafe sink.",
+    "suggestion": "Use textContent instead of innerHTML; sanitize/encode inputs.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "CWE-79",
+    "snippet": "document.getElementById(\\"demo\\").innerHTML = window.location;*/",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "JS-TIMEOUT-001",
+    "file": "samples/js/app3.js",
+    "line": 4,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "Passing strings to setTimeout/setInterval executes code like eval().",
+    "suggestion": "Use function references instead of strings.",
+    "owasp": "A03:2021-Injection,A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "setTimeout(\\"alert('XSS')\\", 1000);",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app3.js",
+    "line": 7,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures",
+    "cwe": "CWE-922",
+    "snippet": "localStorage.setItem(\\"password\\", \\"12345\\");",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app3.js",
+    "line": 6,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures",
+    "cwe": "",
+    "snippet": "// 2. localStorage storing a password \\u2192 should trigger JS-LOCALSTORAGE-AST",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "JS-EVAL-001",
+    "file": "samples/js/app4.js",
+    "line": 65,
+    "severity": "CRITICAL",
+    "category": "Code Injection",
+    "message": "Use of eval() can lead to code execution.",
+    "suggestion": "Avoid eval(); use safe parsers or functions.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "eval(code); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-EVAL-001",
+    "file": "samples/js/app4.js",
+    "line": 195,
+    "severity": "CRITICAL",
+    "category": "Code Injection",
+    "message": "Use of eval() can lead to code execution.",
+    "suggestion": "Avoid eval(); use safe parsers or functions.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "eval(payload); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-DOMXSS-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 45,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input flows into innerHTML assignment \\u2192 DOM XSS.",
+    "suggestion": "Use textContent or sanitize with DOMPurify.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "container.innerHTML = '<h3>Search:</h3>' + untrusted1; // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-DOMXSS-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 208,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input flows into innerHTML assignment \\u2192 DOM XSS.",
+    "suggestion": "Use textContent or sanitize with DOMPurify.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "a.innerHTML = '<a href=\\"' + u + '\\">go</a>'; // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app4.js",
+    "line": 126,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures,A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "CWE-338",
+    "snippet": "const token = Math.random().toString(36).slice(2); // SINK",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 102,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection,A09:2021-SecurityLoggingandMonitoringFailures,A10:2021-Logging&MonitoringFailures",
+    "cwe": "CWE-200",
+    "snippet": "console.log('Fetched length (insecure):', (await res.text()).length);",
+    "detected_by": "AST"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app4.js",
+    "line": 127,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures,A03:2021-Injection,A09:2021-SecurityLoggingandMonitoringFailures,A10:2021-Logging&MonitoringFailures",
+    "cwe": "CWE-200",
+    "snippet": "console.log('Weak token:', token);",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 152,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection,A09:2021-SecurityLoggingandMonitoringFailures,A10:2021-Logging&MonitoringFailures",
+    "cwe": "CWE-200",
+    "snippet": "console.log('Polluted?', (check).pwned === true);",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 181,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection,A09:2021-SecurityLoggingandMonitoringFailures,A10:2021-Logging&MonitoringFailures",
+    "cwe": "CWE-200",
+    "snippet": "console.log('Testing user regex length=', pattern.length);",
+    "detected_by": "AST"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app4.js",
+    "line": 114,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures,A03:2021-Injection",
+    "cwe": "CWE-922",
+    "snippet": "localStorage.setItem('authToken', t); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 191,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection,A07:2021-IdentificationandAuthenticationFailures",
+    "cwe": "CWE-346",
+    "snippet": "window.addEventListener('message', (ev) => {",
+    "detected_by": "AST"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app4.js",
+    "line": 32,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures,A03:2021-Injection",
+    "cwe": "",
+    "snippet": "token: () => getParam('token'),",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app4.js",
+    "line": 112,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures",
+    "cwe": "",
+    "snippet": "const t = SRC.token(); // SOURCE",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app4.js",
+    "line": 118,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures,A05:2021-SecurityMisconfiguration,A07:2021-IdentificationandAuthenticationFailures",
+    "cwe": "",
+    "snippet": "document.cookie = 'session=' + encodeURIComponent(SRC.token() || 'demo') + '; path=/'; // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "GEN-HEUR-003",
+    "file": "samples/js/app4.js",
+    "line": 125,
+    "severity": "HIGH",
+    "category": "Secrets",
+    "message": "Possible hardcoded secret or credential detected.",
+    "suggestion": "Move secrets to environment variables or a secure vault.",
+    "owasp": "A02:2021-CryptographicFailures",
+    "cwe": "",
+    "snippet": "// VULN: V011 \\u2014 Insecure Randomness \\u2014 security token via Math.random",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "GEN-HEUR-012",
+    "file": "samples/js/app4.js",
+    "line": 72,
+    "severity": "LOW",
+    "category": "Exception Handling",
+    "message": "Empty catch block found, errors may be silently ignored.",
+    "suggestion": "Log or handle exceptions securely.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "",
+    "snippet": "try { f(); } catch (e) {}",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "GEN-HEUR-012",
+    "file": "samples/js/app4.js",
+    "line": 103,
+    "severity": "LOW",
+    "category": "Exception Handling",
+    "message": "Empty catch block found, errors may be silently ignored.",
+    "suggestion": "Log or handle exceptions securely.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "",
+    "snippet": "} catch (e) {}",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "GEN-HEUR-012",
+    "file": "samples/js/app4.js",
+    "line": 153,
+    "severity": "LOW",
+    "category": "Exception Handling",
+    "message": "Empty catch block found, errors may be silently ignored.",
+    "suggestion": "Log or handle exceptions securely.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "",
+    "snippet": "} catch (e) {}",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "GEN-HEUR-012",
+    "file": "samples/js/app4.js",
+    "line": 183,
+    "severity": "LOW",
+    "category": "Exception Handling",
+    "message": "Empty catch block found, errors may be silently ignored.",
+    "suggestion": "Log or handle exceptions securely.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "",
+    "snippet": "} catch (e) {}",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "GEN-HEUR-012",
+    "file": "samples/js/app4.js",
+    "line": 233,
+    "severity": "LOW",
+    "category": "Exception Handling",
+    "message": "Empty catch block found, errors may be silently ignored.",
+    "suggestion": "Log or handle exceptions securely.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "",
+    "snippet": "} catch (e) {}",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "JS-CTX-002",
+    "file": "samples/js/app4.js",
+    "line": 77,
+    "severity": "CRITICAL",
+    "category": "Code Injection",
+    "message": "Dangerous dynamic code execution (Function, setTimeout, setInterval) with untrusted input.",
+    "suggestion": "Avoid passing untrusted input to code execution APIs. Validate or remove such usage.",
+    "owasp": "A03:2021-Injection,A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "if (later) setTimeout(later, 50); // SINK (string form)",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "GEN-HEUR-024",
+    "file": "samples/js/app4.js",
+    "line": 51,
+    "severity": "MEDIUM",
+    "category": "Deprecated Apis",
+    "message": "document.write() is dangerous and deprecated.",
+    "suggestion": "Use DOM manipulation APIs instead.",
+    "owasp": "A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "// VULN: V003 \\u2014 DOM XSS \\u2014 document.write with untrusted html",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "JS-DOMXSS-003",
+    "file": "samples/js/app4.js",
+    "line": 54,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input passed to document.write \\u2192 DOM XSS.",
+    "suggestion": "Avoid document.write; use safe DOM methods.",
+    "owasp": "A03:2021-Injection,A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "document.write('<section>' + untrusted3 + '</section>'); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-FUNCTION-001",
+    "file": "samples/js/app4.js",
+    "line": 71,
+    "severity": "CRITICAL",
+    "category": "Code Injection",
+    "message": "Use of Function constructor is dangerous.",
+    "suggestion": "Avoid Function(); use safer alternatives.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const f = new Function('return (' + fnBody + ')'); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 26,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "q: () => getParam('q'),",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 27,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "json: () => getParam('json'),",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 28,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "url: () => getParam('url'),",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 29,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "html: () => getParam('html'),",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 30,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "code: () => getParam('code'),",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 31,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "target: () => getParam('target'),",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 33,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "re: () => getParam('re'),",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 34,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "msg: () => getParam('msg')",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-DOMXSS-003",
+    "file": "samples/js/app4.js",
+    "line": 41,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input passed to document.write \\u2192 DOM XSS.",
+    "suggestion": "Avoid document.write; use safe DOM methods.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const container = document.getElementById('out1') || document.body;",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-DOMXSS-002",
+    "file": "samples/js/app4.js",
+    "line": 49,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input flows into insertAdjacentHTML \\u2192 DOM XSS.",
+    "suggestion": "Use DOM APIs safely or sanitize with DOMPurify.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "container.insertAdjacentHTML('beforeend', '<div class=\\"result\\">' + untrusted2 + '</div>'); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-DOMXSS-003",
+    "file": "samples/js/app4.js",
+    "line": 161,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input passed to document.write \\u2192 DOM XSS.",
+    "suggestion": "Avoid document.write; use safe DOM methods.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const btn = document.getElementById('dangerBtn') || document.createElement('button');",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 166,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "btn.setAttribute('onclick', handler); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 193,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "if (typeof ev.data === 'string' && ev.data.startsWith('RUN:')) {",
+    "detected_by": "AST"
+  },
+  {
+    "id": "JS-DOMXSS-003",
+    "file": "samples/js/app4.js",
+    "line": 207,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input passed to document.write \\u2192 DOM XSS.",
+    "suggestion": "Avoid document.write; use safe DOM methods.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const a = document.createElement('div');",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-DOMXSS-003",
+    "file": "samples/js/app4.js",
+    "line": 219,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input passed to document.write \\u2192 DOM XSS.",
+    "suggestion": "Avoid document.write; use safe DOM methods.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const el = document.createElement('div');",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 220,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "el.setAttribute('style', v); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-TIMEOUT-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 232,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "setTimeout called with a string \\u2192 dynamic code execution like eval().",
+    "suggestion": "Pass a function reference instead of a string.",
+    "owasp": "A03:2021-Injection,A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "await fetch('/api/echo', { headers: { 'X-Note': msg } }); // SINK (potential splitting on some servers)",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-DOMXSS-003",
+    "file": "samples/js/app4.js",
+    "line": 243,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input passed to document.write \\u2192 DOM XSS.",
+    "suggestion": "Avoid document.write; use safe DOM methods.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const c = document.getElementById('out2') || document.body;",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-DOMXSS-003",
+    "file": "samples/js/app4.js",
+    "line": 254,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input passed to document.write \\u2192 DOM XSS.",
+    "suggestion": "Avoid document.write; use safe DOM methods.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "const link = document.createElement('a');",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-DOMXSS-AST-001",
+    "file": "samples/js/app4.js",
+    "line": 244,
+    "severity": "CRITICAL",
+    "category": "Cross-Site Scripting",
+    "message": "User input flows into innerHTML assignment \\u2192 DOM XSS.",
+    "suggestion": "Use textContent or sanitize with DOMPurify.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "c.innerHTML += '<p>' + extra + '</p>'; // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-EVAL-TAINT-001",
+    "file": "samples/js/app4.js",
+    "line": 19,
+    "severity": "CRITICAL",
+    "category": "Code Injection",
+    "message": "eval() with user input \\u2192 Remote Code Execution.",
+    "suggestion": "Avoid eval(); use JSON.parse or safe parsers.",
+    "owasp": "A03:2021-Injection,A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "const m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-OPENREDIRECT-001",
+    "file": "samples/js/app4.js",
+    "line": 255,
+    "severity": "HIGH",
+    "category": "Open Redirect",
+    "message": "User input assigned to location.href \\u2192 Open Redirect.",
+    "suggestion": "Validate URLs against an allowlist.",
+    "owasp": "A01:2021-BrokenAccessControl,A03:2021-Injection",
+    "cwe": "",
+    "snippet": "link.href = u; // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-FETCH-001",
+    "file": "samples/js/app4.js",
+    "line": 101,
+    "severity": "HIGH",
+    "category": "Data Exfiltration",
+    "message": "User-controlled fetch() with credentials \\u2192 sensitive data exfiltration.",
+    "suggestion": "Validate destination URLs and avoid credentials: 'include' with untrusted URLs.",
+    "owasp": "A03:2021-Injection,A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "const res = await fetch(u, { credentials: 'include' }); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "JS-REDOS-001",
+    "file": "samples/js/app4.js",
+    "line": 179,
+    "severity": "HIGH",
+    "category": "Redos",
+    "message": "User-controlled regex pattern may cause ReDoS.",
+    "suggestion": "Validate regex input or use safe-regex libraries.",
+    "owasp": "A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "const re = new RegExp(pattern); // SINK",
+    "detected_by": "Context-AST"
+  },
+  {
+    "id": "PHP-SYSTEM-EXEC-001",
+    "file": "samples/php/index.php",
+    "line": 12,
+    "severity": "HIGH",
+    "category": "Command Execution",
+    "message": "Command execution can lead to injection if args are tainted.",
+    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "if(isset($_GET['cmd'])){",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-XSS-001",
+    "file": "samples/php/index.php",
+    "line": 8,
+    "severity": "HIGH",
+    "category": "Cross-Site Scripting",
+    "message": "Echoing unescaped user input can cause XSS.",
+    "suggestion": "Encode output with htmlspecialchars and validate inputs.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "echo $_GET['html']; // XSS",
+    "detected_by": "Regex"
+  },
+  {
     "id": "PHP-CRYPTO-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 141,
+    "file": "samples/php/index.php",
+    "line": 10,
     "severity": "MEDIUM",
     "category": "Weak Cryptography",
     "message": "Weak hash algorithm used.",
     "suggestion": "Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes.",
     "owasp": "A02:2021-CryptographicFailures",
     "cwe": "",
-    "snippet": "$hash = md5($_POST['pwd']);",
+    "snippet": "$hash = md5($_GET['p']); // weak crypto",
     "detected_by": "Heuristic"
   },
   {
     "id": "PHP-ERROR-LEAK-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 104,
+    "file": "samples/php/index.php",
+    "line": 19,
     "severity": "LOW",
     "category": "Error Handling",
     "message": "Leaking raw errors or phpinfo() reveals sensitive info.",
     "suggestion": "Log errors server-side and show generic error messages.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures,A10:2021-Logging&MonitoringFailures",
+    "cwe": "",
+    "snippet": "var_dump($e); // error leak",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "PHP-NO-DB-ERROR-HANDLING-001",
+    "file": "samples/php/index.php",
+    "line": 2,
+    "severity": "MEDIUM",
+    "category": "Error Handling",
+    "message": "Database connection created without proper error handling.",
+    "suggestion": "Always wrap database connections in try/catch and log errors securely.",
     "owasp": "A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "CWE-252",
+    "snippet": "$mysqli = new mysqli(\\"localhost\\",\\"root\\",\\"\\",\\"db\\");",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "PHP-SYSTEM-AST-001",
+    "file": "samples/php/index.php",
+    "line": 13,
+    "severity": "HIGH",
+    "category": "Command Execution",
+    "message": "system() detected in PHP AST; may allow command injection.",
+    "suggestion": "Avoid system(); use safer built-in APIs.",
+    "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "phpinfo();",
+    "snippet": "system(\\"ls \\" . $_GET['cmd']); // command injection",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PHP-EVAL-001",
+    "file": "samples/php/index2.php",
+    "line": 4,
+    "severity": "HIGH",
+    "category": "Dangerous Function",
+    "message": "Use of eval() can lead to code injection.",
+    "suggestion": "Avoid eval(); use safer alternatives.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "eval($code); // \\u274c Dangerous",
     "detected_by": "Regex"
   },
   {
-    "id": "PHP-MYSQL-LEGACY-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 20,
+    "id": "PHP-SYSTEM-EXEC-001",
+    "file": "samples/php/index2.php",
+    "line": 7,
     "severity": "HIGH",
-    "category": "Sql Injection",
-    "message": "Use of deprecated mysql_* API with untrusted input allows SQL Injection.",
-    "suggestion": "Migrate to mysqli or PDO with prepared statements.",
+    "category": "Command Execution",
+    "message": "Command execution can lead to injection if args are tainted.",
+    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "$res = mysql_query(\\"SELECT * FROM users WHERE id=$id\\"); // vuln: SQLi",
+    "snippet": "$file = $_GET['file'];",
     "detected_by": "Regex"
   },
   {
-    "id": "PHP-SQL-TAINT",
-    "file": "uploads\\\\sample2.php",
-    "line": 73,
-    "severity": "CRITICAL",
-    "category": "Sql Injection",
-    "message": "User-controlled input flows into SQL query without sanitization.",
-    "suggestion": "Use prepared statements (parameterized queries).",
-    "owasp": "A03:2021-Injection",
-    "cwe": "CWE-89",
-    "snippet": "mysql_query(\\"UPDATE users SET email='{$_POST['email']}' WHERE id=1\\");",
-    "detected_by": "Regex+AST(Taint)"
+    "id": "PHP-CRYPTO-001",
+    "file": "samples/php/index2.php",
+    "line": 18,
+    "severity": "MEDIUM",
+    "category": "Weak Cryptography",
+    "message": "Weak hash algorithm used.",
+    "suggestion": "Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes.",
+    "owasp": "A02:2021-CryptographicFailures",
+    "cwe": "",
+    "snippet": "$hash1 = md5($password);   // \\u274c Weak hash",
+    "detected_by": "Heuristic"
   },
   {
-    "id": "PHP-MYSQL-LEGACY-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 92,
+    "id": "PHP-CRYPTO-001",
+    "file": "samples/php/index2.php",
+    "line": 19,
+    "severity": "MEDIUM",
+    "category": "Weak Cryptography",
+    "message": "Weak hash algorithm used.",
+    "suggestion": "Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes.",
+    "owasp": "A02:2021-CryptographicFailures",
+    "cwe": "",
+    "snippet": "$hash2 = sha1($password);  // \\u274c Weak hash",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "PHP-MYSQLI-001",
+    "file": "samples/php/index2.php",
+    "line": 14,
     "severity": "HIGH",
     "category": "Sql Injection",
-    "message": "Use of deprecated mysql_* API with untrusted input allows SQL Injection.",
-    "suggestion": "Migrate to mysqli or PDO with prepared statements.",
+    "message": "Use of mysqli_query with untrusted input may lead to SQL Injection.",
+    "suggestion": "Always use prepared statements (mysqli_stmt or PDO).",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "mysql_query(\\"INSERT INTO users (username, password) VALUES ('$u','$p')\\");",
+    "snippet": "$result = mysqli_query($conn, $query);",
     "detected_by": "Regex"
   },
   {
     "id": "PHP-INCLUDE-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 32,
+    "file": "samples/php/index2.php",
+    "line": 22,
+    "severity": "HIGH",
+    "category": "File Inclusion",
+    "message": "Dynamic include/require detected. May allow LFI/RFI.",
+    "suggestion": "Never include user input in include/require paths. Use whitelists.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "$page = $_GET['page'];",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-UPLOAD-001",
+    "file": "samples/php/index2.php",
+    "line": 38,
+    "severity": "HIGH",
+    "category": "Insecure File Upload",
+    "message": "File upload without validation detected.",
+    "suggestion": "Validate file type, size, extension; randomize name; store outside web root.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "move_uploaded_file($_FILES['file']['tmp_name'], \\"uploads/\\" . $_FILES['file']['name']); // \\u274c No checks",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-HEUR-023",
+    "file": "samples/php/index2.php",
+    "line": 42,
+    "severity": "LOW",
+    "category": "Session Handling",
+    "message": "Session start detected, ensure secure flags are set.",
+    "suggestion": "Use secure session cookies (HttpOnly, Secure, SameSite).",
+    "owasp": "A07:2021-IdentificationandAuthenticationFailures",
+    "cwe": "",
+    "snippet": "session_start(); // \\u274c No secure cookie flags",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "PHP-SYSTEM-AST-001",
+    "file": "samples/php/index2.php",
+    "line": 8,
+    "severity": "HIGH",
+    "category": "Command Execution",
+    "message": "system() detected in PHP AST; may allow command injection.",
+    "suggestion": "Avoid system(); use safer built-in APIs.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "system(\\"cat \\" . $file); // \\u274c Dangerous",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PHP-INCLUDE-AST-001",
+    "file": "samples/php/index2.php",
+    "line": 23,
+    "severity": "HIGH",
+    "category": "File Inclusion",
+    "message": "Dynamic include/require detected.",
+    "suggestion": "Never use user input in include/require paths. Use whitelists.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "include($page . \\".php\\"); // \\u274c Insecure include",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PHP-FILE-READ-001",
+    "file": "samples/php/index3.php",
+    "line": 27,
+    "severity": "HIGH",
+    "category": "Path Traversal",
+    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
+    "suggestion": "Avoid using unvalidated input in file_get_contents.",
+    "owasp": "A05:2021-SecurityMisconfiguration,A10:2021-SSRF",
+    "cwe": "",
+    "snippet": "$response = file_get_contents(\\"http://\\" . $url);",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "PHP-FILE-READ-001",
+    "file": "samples/php/index3.php",
+    "line": 34,
+    "severity": "HIGH",
+    "category": "Path Traversal",
+    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
+    "suggestion": "Avoid using unvalidated input in file_get_contents.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "$data = file_get_contents($filename);",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-AUTH-CHECK-001",
+    "file": "samples/php/index3.php",
+    "line": 6,
+    "severity": "HIGH",
+    "category": "Broken Access Control",
+    "message": "Access control decision appears to be based on user input.",
+    "suggestion": "Enforce server-side authorization using session or token checks.",
+    "owasp": "A01:2021-BrokenAccessControl",
+    "cwe": "",
+    "snippet": "if ($_GET['role'] === 'admin') {",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-HARDCODED-SECRET-002",
+    "file": "samples/php/index3.php",
+    "line": 14,
+    "severity": "HIGH",
+    "category": "Insecure Design",
+    "message": "Hardcoded secret or token detected.",
+    "suggestion": "Use environment variables or a secrets manager.",
+    "owasp": "A04:2021-InsecureDesign",
+    "cwe": "",
+    "snippet": "$secret = \\"mySuperSecretApiKey123\\";",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-OUTDATED-MYSQL-001",
+    "file": "samples/php/index3.php",
+    "line": 20,
+    "severity": "HIGH",
+    "category": "Outdated Components",
+    "message": "Use of deprecated mysql_connect() detected.",
+    "suggestion": "Migrate to PDO or mysqli with prepared statements.",
+    "owasp": "A06:2021-VulnerableandOutdatedComponents",
+    "cwe": "",
+    "snippet": "$conn = mysql_connect(\\"localhost\\", \\"root\\", \\"password\\");",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-SYSTEM-EXEC-001",
+    "file": "samples/php/index4.php",
+    "line": 6,
+    "severity": "HIGH",
+    "category": "Command Execution",
+    "message": "Command execution can lead to injection if args are tainted.",
+    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "echo preg_replace(\\"/.*/e\\", \\"system('ls')\\", $input);",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PHP-INCLUDE-001",
+    "file": "samples/php/index4.php",
+    "line": 13,
+    "severity": "HIGH",
+    "category": "File Inclusion",
+    "message": "Dynamic include/require detected. May allow LFI/RFI.",
+    "suggestion": "Never include user input in include/require paths. Use whitelists.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "$file = $_GET['page'];",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-UNSERIALIZE-AST-001",
+    "file": "samples/php/index4.php",
+    "line": 10,
+    "severity": "CRITICAL",
+    "category": "Insecure Deserialization",
+    "message": "unserialize() called in AST. Dangerous with untrusted input.",
+    "suggestion": "Avoid unserialize(); prefer JSON or validate inputs.",
+    "owasp": "A08:2021-SoftwareandDataIntegrityFailures",
+    "cwe": "",
+    "snippet": "$obj = unserialize($data);",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PHP-INCLUDE-AST-001",
+    "file": "samples/php/index4.php",
+    "line": 14,
+    "severity": "HIGH",
+    "category": "File Inclusion",
+    "message": "Dynamic include/require detected.",
+    "suggestion": "Never use user input in include/require paths. Use whitelists.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "include($file);",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PHP-SYSTEM-EXEC-001",
+    "file": "samples/php/index5.php",
+    "line": 22,
+    "severity": "HIGH",
+    "category": "Command Execution",
+    "message": "Command execution can lead to injection if args are tainted.",
+    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "if (isset($_GET['cmd'])) {",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-INCLUDE-001",
+    "file": "samples/php/index5.php",
+    "line": 27,
     "severity": "HIGH",
     "category": "File Inclusion",
     "message": "Dynamic include/require detected. May allow LFI/RFI.",
@@ -174,165 +1373,9 @@ function downloadJSON() {
     "detected_by": "Regex"
   },
   {
-    "id": "PHP-FILE-READ-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 44,
-    "severity": "HIGH",
-    "category": "Path Traversal",
-    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
-    "suggestion": "Avoid using unvalidated input in file_get_contents.",
-    "owasp": "A05:2021-SecurityMisconfiguration",
-    "cwe": "",
-    "snippet": "echo file_get_contents(\\"uploads/\\" . $file);",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-FILE-READ-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 116,
-    "severity": "HIGH",
-    "category": "Path Traversal",
-    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
-    "suggestion": "Avoid using unvalidated input in file_get_contents.",
-    "owasp": "A05:2021-SecurityMisconfiguration",
-    "cwe": "",
-    "snippet": "$ctx = stream_context_create([\\"ssl\\"=>[\\"verify_peer\\"=>false]]);",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-FILE-READ-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 134,
-    "severity": "HIGH",
-    "category": "Path Traversal",
-    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
-    "suggestion": "Avoid using unvalidated input in file_get_contents.",
-    "owasp": "A05:2021-SecurityMisconfiguration",
-    "cwe": "",
-    "snippet": "$b = file_get_contents(\\"balance.txt\\");",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-UNSERIALIZE-AST-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 68,
-    "severity": "CRITICAL",
-    "category": "Insecure Deserialization",
-    "message": "unserialize() called in AST. Dangerous with untrusted input.",
-    "suggestion": "Avoid unserialize(); prefer JSON or validate inputs.",
-    "owasp": "A08:2021-SoftwareandDataIntegrityFailures",
-    "cwe": "",
-    "snippet": "$obj = unserialize($_POST['data']);",
-    "detected_by": "AST"
-  },
-  {
-    "id": "PHP-UPLOAD-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 38,
-    "severity": "HIGH",
-    "category": "Insecure File Upload",
-    "message": "File upload without validation detected.",
-    "suggestion": "Validate file type, size, extension; randomize name; store outside web root.",
-    "owasp": "A05:2021-SecurityMisconfiguration",
-    "cwe": "",
-    "snippet": "move_uploaded_file($_FILES['file']['tmp_name'], \\"uploads/\\" . $_FILES['file']['name']);",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-AUTH-CHECK-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 101,
-    "severity": "HIGH",
-    "category": "Broken Access Control",
-    "message": "Access control decision appears to be based on user input.",
-    "suggestion": "Enforce server-side authorization using session or token checks.",
-    "owasp": "A01:2021-BrokenAccessControl,A07:2021-IdentificationandAuthenticationFailures",
-    "cwe": "",
-    "snippet": "setcookie(\\"auth\\", $_GET['auth'] ?? \\"none\\");",
-    "detected_by": "AST"
-  },
-  {
-    "id": "PHP-SQLI-002",
-    "file": "uploads\\\\sample2.php",
-    "line": 72,
-    "severity": "CRITICAL",
-    "category": "Sql Injection",
-    "message": "Potential SQL injection vulnerability",
-    "suggestion": "Use prepared statements or parameterized queries. Validate all inputs.",
-    "owasp": "A03:2021-Injection",
-    "cwe": "CWE-89",
-    "snippet": "if (isset($_POST['updateEmail'])) {",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-AUTH-CHECK-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 83,
-    "severity": "HIGH",
-    "category": "Broken Access Control",
-    "message": "Access control decision appears to be based on user input.",
-    "suggestion": "Enforce server-side authorization using session or token checks.",
-    "owasp": "A01:2021-BrokenAccessControl",
-    "cwe": "",
-    "snippet": "if ($_GET['user'] == $admin_user && $_GET['pass'] == $admin_pass) {",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-HARDCODED-SECRET-002",
-    "file": "uploads\\\\sample2.php",
-    "line": 110,
-    "severity": "HIGH",
-    "category": "Insecure Design",
-    "message": "Hardcoded secret or token detected.",
-    "suggestion": "Use environment variables or a secrets manager.",
-    "owasp": "A04:2021-InsecureDesign",
-    "cwe": "",
-    "snippet": "$apiKey = \\"SECRET-API-KEY-123\\";",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-OUTDATED-MYSQL-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 14,
-    "severity": "HIGH",
-    "category": "Outdated Components",
-    "message": "Use of deprecated mysql_connect() detected.",
-    "suggestion": "Migrate to PDO or mysqli with prepared statements.",
-    "owasp": "A06:2021-VulnerableandOutdatedComponents",
-    "cwe": "",
-    "snippet": "$conn = mysql_connect(\\"localhost\\", \\"root\\", \\"root\\");",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-SSRF-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 117,
-    "severity": "HIGH",
-    "category": "Ssrf",
-    "message": "Potential SSRF: fetching external URL without validation.",
-    "suggestion": "Validate and whitelist remote URLs before requesting.",
-    "owasp": "A10:2021-SSRF",
-    "cwe": "",
-    "snippet": "file_get_contents(\\"https://untrusted-site.com/data\\", false, $ctx);",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "php-header-injection",
-    "file": "uploads\\\\sample2.php",
-    "line": 78,
-    "severity": "HIGH",
-    "category": "Injection",
-    "message": "Unvalidated redirects via header() can lead to Open Redirect or CRLF Injection.",
-    "suggestion": "Sanitize and validate redirect URLs. Use a fixed set of allowed destinations.",
-    "owasp": "A01:2021-BrokenAccessControl",
-    "cwe": "",
-    "snippet": "header(\\"Location: \\" . $_GET['url']);",
-    "detected_by": "Regex"
-  },
-  {
     "id": "PHP-HEUR-023",
-    "file": "uploads\\\\sample2.php",
-    "line": 53,
+    "file": "samples/php/index5.php",
+    "line": 32,
     "severity": "LOW",
     "category": "Session Handling",
     "message": "Session start detected, ensure secure flags are set.",
@@ -343,30 +1386,160 @@ function downloadJSON() {
     "detected_by": "Heuristic"
   },
   {
+    "id": "PHP-HARDCODED-CREDS-001",
+    "file": "samples/php/index5.php",
+    "line": 6,
+    "severity": "HIGH",
+    "category": "Sensitive Info Disclosure",
+    "message": "Hardcoded database username detected.",
+    "suggestion": "Use environment variables or config files instead of hardcoding credentials.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "CWE-798",
+    "snippet": "$username = \\"root\\";",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "PHP-NO-DB-ERROR-HANDLING-001",
+    "file": "samples/php/index5.php",
+    "line": 11,
+    "severity": "MEDIUM",
+    "category": "Error Handling",
+    "message": "Database connection created without proper error handling.",
+    "suggestion": "Always wrap database connections in try/catch and log errors securely.",
+    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures",
+    "cwe": "CWE-252",
+    "snippet": "$conn = new mysqli($servername, $username, $password, $dbname);",
+    "detected_by": "Heuristic"
+  },
+  {
     "id": "PHP-SYSTEM-AST-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 28,
+    "file": "samples/php/index5.php",
+    "line": 23,
     "severity": "HIGH",
     "category": "Command Execution",
     "message": "system() detected in PHP AST; may allow command injection.",
     "suggestion": "Avoid system(); use safer built-in APIs.",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "system(\\"ping -c 1 \\" . $_GET['ping']);",
+    "snippet": "system($_GET['cmd']);",
     "detected_by": "AST"
   },
   {
     "id": "PHP-INCLUDE-AST-001",
-    "file": "uploads\\\\sample2.php",
-    "line": 33,
+    "file": "samples/php/index5.php",
+    "line": 28,
     "severity": "HIGH",
     "category": "File Inclusion",
     "message": "Dynamic include/require detected.",
     "suggestion": "Never use user input in include/require paths. Use whitelists.",
     "owasp": "A05:2021-SecurityMisconfiguration",
     "cwe": "",
-    "snippet": "include($_GET['page'] . \\".php\\");",
+    "snippet": "include($_GET['page']);",
     "detected_by": "AST"
+  },
+  {
+    "id": "PHP-FILE-READ-001",
+    "file": "samples/php/index6.php",
+    "line": 7,
+    "severity": "HIGH",
+    "category": "Path Traversal",
+    "message": "file_get_contents on user input may allow path traversal / arbitrary file read.",
+    "suggestion": "Avoid using unvalidated input in file_get_contents.",
+    "owasp": "A05:2021-SecurityMisconfiguration",
+    "cwe": "",
+    "snippet": "$code = file_get_contents($argv[1] ?? \\"test.php\\");",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-HEUR-021",
+    "file": "samples/php/index6.php",
+    "line": 4,
+    "severity": "MEDIUM",
+    "category": "Superglobals",
+    "message": "Use of PHP superglobal $_REQUEST detected.",
+    "suggestion": "Use $_GET or $_POST explicitly and validate input.",
+    "owasp": "A01:2021-BrokenAccessControl",
+    "cwe": "",
+    "snippet": "* Detects if user input ($_GET, $_POST, $_REQUEST) flows into dangerous sinks",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "PHP-HEUR-021",
+    "file": "samples/php/index6.php",
+    "line": 10,
+    "severity": "MEDIUM",
+    "category": "Superglobals",
+    "message": "Use of PHP superglobal $_REQUEST detected.",
+    "suggestion": "Use $_GET or $_POST explicitly and validate input.",
+    "owasp": "A01:2021-BrokenAccessControl",
+    "cwe": "",
+    "snippet": "$sources = [\\"\\\\$_GET\\", \\"\\\\$_POST\\", \\"\\\\$_REQUEST\\"];",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "JAVA-RUNTIME-EXEC-REGEX",
+    "file": "samples/java/jav1.java",
+    "line": 81,
+    "severity": "CRITICAL",
+    "category": "Command Injection",
+    "message": "Runtime.getRuntime().exec() detected.",
+    "suggestion": "Avoid direct exec(); use ProcessBuilder with validated args.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "CWE-78",
+    "snippet": "Process p = Runtime.getRuntime().exec(cmd);",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "JAVA-SQL-HEURISTIC",
+    "file": "samples/java/jav1.java",
+    "line": 98,
+    "severity": "HIGH",
+    "category": "Sql Injection",
+    "message": "Concatenating SQL queries with user input is dangerous.",
+    "suggestion": "Use PreparedStatement with bind parameters.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "CWE-89",
+    "snippet": "String sql = \\"SELECT * FROM users WHERE username = '\\" + user + \\"'\\";",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "JAVA-DESERIALIZE-AST",
+    "file": "samples/java/jav1.java",
+    "line": 123,
+    "severity": "HIGH",
+    "category": "Insecure Deserialization",
+    "message": "ObjectInputStream.readObject() detected.",
+    "suggestion": "Avoid deserialization of untrusted data.",
+    "owasp": "A08:2021-SoftwareandDataIntegrityFailures",
+    "cwe": "CWE-502",
+    "snippet": "Object obj = ois.readObject();",
+    "detected_by": "AST"
+  },
+  {
+    "id": "PY-EVAL-REGEX",
+    "file": "samples/python/py1.py",
+    "line": 8,
+    "severity": "CRITICAL",
+    "category": "Code Injection",
+    "message": "Use of eval() can lead to code execution.",
+    "suggestion": "Avoid eval(); use ast.literal_eval if parsing data.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "CWE-94",
+    "snippet": "eval(user_input)   # VULN: PY-EVAL-REGEX + PY-EVAL-TAINT",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PY-PICKLE-LOAD-HEURISTIC",
+    "file": "samples/python/py1.py",
+    "line": 12,
+    "severity": "HIGH",
+    "category": "Insecure Deserialization",
+    "message": "Use of pickle.load() is unsafe with untrusted input.",
+    "suggestion": "Avoid pickle with untrusted data; use JSON or safer libraries.",
+    "owasp": "A08:2021-SoftwareandDataIntegrityFailures",
+    "cwe": "CWE-502",
+    "snippet": "obj = pickle.load(f)  # VULN: PY-PICKLE-LOAD-HEURISTIC",
+    "detected_by": "Heuristic"
   }
 ]`;
   downloadContent("report.json", content, "application/json");
@@ -379,7 +1552,7 @@ function downloadHTML() {
 </head>
 <body>
 <h1>Secure Code Analyzer Report</h1>
-<small>Generated at: 2025-09-05 08:42:00 UTC</small>
+<small>Generated at: 2025-09-05 09:40:13 UTC</small>
 
 <div class="downloads">
   <button onclick="downloadJSON()">⬇ Download JSON</button>
@@ -397,15 +1570,21 @@ function downloadHTML() {
     </select>
   </label>
   <label>OWASP:
-    <select id="owaspFilter" onchange="filterTable()">
-      <option value="ALL" selected>All</option>
-      <option value='A01:2021-BrokenAccessControl'>A01:2021-BrokenAccessControl</option><option value='A02:2021-CryptographicFailures'>A02:2021-CryptographicFailures</option><option value='A03:2021-Injection'>A03:2021-Injection</option><option value='A04:2021-InsecureDesign'>A04:2021-InsecureDesign</option><option value='A05:2021-SecurityMisconfiguration'>A05:2021-SecurityMisconfiguration</option><option value='A06:2021-VulnerableandOutdatedComponents'>A06:2021-VulnerableandOutdatedComponents</option><option value='A07:2021-IdentificationandAuthenticationFailures'>A07:2021-IdentificationandAuthenticationFailures</option><option value='A08:2021-SoftwareandDataIntegrityFailures'>A08:2021-SoftwareandDataIntegrityFailures</option><option value='A09:2021-SecurityLoggingandMonitoringFailures'>A09:2021-SecurityLoggingandMonitoringFailures</option><option value='A10:2021-SSRF'>A10:2021-SSRF</option>
+    <select id='owaspFilter' onchange='filterTable()'>
+      <option value='ALL' selected>All</option>
+      <option value='A01:2021-BrokenAccessControl'>A01:2021-BrokenAccessControl</option><option value='A02:2021-CryptographicFailures'>A02:2021-CryptographicFailures</option><option value='A03:2021-Injection'>A03:2021-Injection</option><option value='A04:2021-InsecureDesign'>A04:2021-InsecureDesign</option><option value='A05:2021-SecurityMisconfiguration'>A05:2021-SecurityMisconfiguration</option><option value='A06:2021-VulnerableandOutdatedComponents'>A06:2021-VulnerableandOutdatedComponents</option><option value='A07:2021-IdentificationandAuthenticationFailures'>A07:2021-IdentificationandAuthenticationFailures</option><option value='A08:2021-SoftwareandDataIntegrityFailures'>A08:2021-SoftwareandDataIntegrityFailures</option><option value='A09:2021-SecurityLoggingandMonitoringFailures'>A09:2021-SecurityLoggingandMonitoringFailures</option><option value='A10:2021-Logging&MonitoringFailures'>A10:2021-Logging&MonitoringFailures</option><option value='A10:2021-SSRF'>A10:2021-SSRF</option>
     </select>
   </label>
   <label>CWE:
-    <select id="cweFilter" onchange="filterTable()">
-      <option value="ALL" selected>All</option>
-      <option value='CWE-89'>CWE-89</option>
+    <select id='cweFilter' onchange='filterTable()'>
+      <option value='ALL' selected>All</option>
+      <option value='CWE-200'>CWE-200</option><option value='CWE-252'>CWE-252</option><option value='CWE-338'>CWE-338</option><option value='CWE-346'>CWE-346</option><option value='CWE-502'>CWE-502</option><option value='CWE-78'>CWE-78</option><option value='CWE-79'>CWE-79</option><option value='CWE-798'>CWE-798</option><option value='CWE-89'>CWE-89</option><option value='CWE-922'>CWE-922</option><option value='CWE-94'>CWE-94</option><option value='CWE-95'>CWE-95</option>
+    </select>
+  </label>
+  <label>File Type:
+    <select id='fileTypeFilter' onchange='filterTable()'>
+      <option value='ALL' selected>All</option>
+      <option value='java'>Java</option><option value='js'>JavaScript</option><option value='php'>PHP</option><option value='py'>Python</option>
     </select>
   </label>
   <label>Search:
@@ -424,105 +1603,1209 @@ function downloadHTML() {
   </thead>
   <tbody id="tbody">
     
+          <tr class="row-critical">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">20</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code Injection</td>
+            <td class="rule-cell">JS-EVAL-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-95</span></td>
+            <td>Use of eval() can lead to code execution</td>
+            <td><code>eval(req.query.code); // code injection</code></td>
+            <td>Avoid eval(); use safe parsers or functions</td>
+            <td>Context-AST+AST(Taint)</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">12</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code-Execution</td>
+            <td class="rule-cell">js-child-process-exec<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-78</span></td>
+            <td>Use of child_process; exec() with user input may allow remote command execution</td>
+            <td><code>child_process.exec(&#x27;ls &#x27; + req.query.dir); // command injection</code></td>
+            <td>Use safer alternatives like execFile with strict input validation</td>
+            <td>Context-AST+AST(Taint)</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">31</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input flows into innerHTML assignment → DOM XSS</td>
+            <td><code>document.body.innerHTML = req.query.html; // XSS in client-side route (demo)</code></td>
+            <td>Use textContent or sanitize with DOMPurify</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">7</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code Injection</td>
+            <td class="rule-cell">JS-CTX-002<br><span class='tag owasp'>A02:2021-CryptographicFailures</span> <span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Dangerous dynamic code execution (Function, setTimeout, setInterval) with untrusted input</td>
+            <td><code>const h = crypto.createHash(&#x27;md5&#x27;).update(req.query.q || &#x27;x&#x27;).digest(&#x27;hex&#x27;);</code></td>
+            <td>Avoid passing untrusted input to code execution APIs; Validate or remove such usage</td>
+            <td>Context-AST</td>
+          </tr>
+        
           <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">63</td>
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">1</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>Dangerous Function</td>
-            <td class="rule-cell">PHP-EVAL-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>Use of eval() can lead to code injection</td>
-            <td><code>eval($_GET[&#x27;code&#x27;]);</code></td>
-            <td>Avoid eval(); use safer alternatives</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">27</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Command Execution</td>
-            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>Command execution can lead to injection if args are tainted</td>
-            <td><code>if (isset($_GET[&#x27;ping&#x27;])) {</code></td>
-            <td>Avoid shell execution; use built-in APIs and strict validation</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">107</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Command Execution</td>
-            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>Command execution can lead to injection if args are tainted</td>
-            <td><code>class Test { public $cmd; function __wakeup(){ system($this-&gt;cmd); } }</code></td>
-            <td>Avoid shell execution; use built-in APIs and strict validation</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>const express = require(&#x27;express&#x27;);</code></td>
+            <td>Pass a function reference instead of a string</td>
             <td>AST</td>
           </tr>
         
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">3</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>const crypto = require(&#x27;crypto&#x27;);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">4</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>const child_process = require(&#x27;child_process&#x27;);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">6</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>app.get(&#x27;/hash&#x27;, (req, res) =&gt; {</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">11</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>app.get(&#x27;/run&#x27;, (req, res) =&gt; {</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">13</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>res.send(&quot;ok&quot;);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">19</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>app.get(&#x27;/eval&#x27;, (req, res) =&gt; {</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">21</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>res.send(&quot;done&quot;);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">24</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>app.get(&#x27;/search&#x27;, (req, res) =&gt; {</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">27</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>res.send(&quot;searching&quot;);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">30</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>app.get(&#x27;/xss&#x27;, (req, res) =&gt; {</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app.js</td>
+            <td style="text-align:right">32</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>res.send(&quot;done&quot;);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>samples/js/app2.js</td>
+            <td style="text-align:right">6</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Information Disclosure</td>
+            <td class="rule-cell">JS-CONSOLE-001<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag owasp'>A10:2021-Logging&amp;amp;MonitoringFailures</span> <span class='tag cwe'>CWE-200</span></td>
+            <td>Console logging detected</td>
+            <td><code>console.log(&quot;Admin section visible!&quot;); // BAD: client-side auth check</code></td>
+            <td>Remove console statements in production</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>samples/js/app2.js</td>
+            <td style="text-align:right">32</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Information Disclosure</td>
+            <td class="rule-cell">JS-CONSOLE-001<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag owasp'>A10:2021-Logging&amp;amp;MonitoringFailures</span> <span class='tag cwe'>CWE-200</span></td>
+            <td>Console logging detected</td>
+            <td><code>console.log(&quot;Debug: reached end of app2.js&quot;);*/</code></td>
+            <td>Remove console statements in production</td>
+            <td>Heuristic</td>
+          </tr>
+        
           <tr class="row-medium">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">141</td>
+            <td>samples/js/app2.js</td>
+            <td style="text-align:right">5</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Broken Access Control</td>
+            <td class="rule-cell">JS-CLIENT-AUTH-001<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
+            <td>Authorization logic found in client-side code; This can be bypassed</td>
+            <td><code>if (user.role === &quot;admin&quot;) {</code></td>
+            <td>Do not rely on client-side authorization checks</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app2.js</td>
+            <td style="text-align:right">13</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Insecure Design</td>
+            <td class="rule-cell">JS-DISABLE-CSP-001<br><span class='tag owasp'>A04:2021-InsecureDesign</span></td>
+            <td>CSP with unsafe-inline detected; This weakens XSS protection</td>
+            <td><code>const cspHeader = &quot;Content-Security-Policy: default-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;&quot;;</code></td>
+            <td>Avoid unsafe-inline; use nonces or hashes in CSP</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/js/app2.js</td>
+            <td style="text-align:right">19</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Outdated Components</td>
+            <td class="rule-cell">JS-JQUERY-OLD-001<br><span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>Old jQuery version detected; Likely vulnerable to XSS</td>
+            <td><code>const jqueryVer = &quot;jquery-1.12.4.min.js&quot;;</code></td>
+            <td>Upgrade to latest jQuery version</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/js/app2.js</td>
+            <td style="text-align:right">25</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Hardcoded Urls</td>
+            <td class="rule-cell">GEN-HEUR-014<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>Use of insecure HTTP URL</td>
+            <td><code>const userUrl = &quot;http://&quot; + window.location.search.replace(&quot;?url=&quot;, &quot;&quot;);</code></td>
+            <td>Always use HTTPS instead of HTTP</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app3.js</td>
+            <td style="text-align:right">10</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-XSS-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-79</span></td>
+            <td>Possible DOM-based XSS via unsafe sink</td>
+            <td><code>document.getElementById(&quot;demo&quot;).innerHTML = window.location;*/</code></td>
+            <td>Use textContent instead of innerHTML; sanitize/encode inputs</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app3.js</td>
+            <td style="text-align:right">4</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>Passing strings to setTimeout/setInterval executes code like eval()</td>
+            <td><code>setTimeout(&quot;alert(&#x27;XSS&#x27;)&quot;, 1000);</code></td>
+            <td>Use function references instead of strings</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app3.js</td>
+            <td style="text-align:right">7</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span> <span class='tag cwe'>CWE-922</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>localStorage.setItem(&quot;password&quot;, &quot;12345&quot;);</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app3.js</td>
+            <td style="text-align:right">6</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>// 2. localStorage storing a password → should trigger JS-LOCALSTORAGE-AST</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">65</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code Injection</td>
+            <td class="rule-cell">JS-EVAL-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Use of eval() can lead to code execution</td>
+            <td><code>eval(code); // SINK</code></td>
+            <td>Avoid eval(); use safe parsers or functions</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">195</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code Injection</td>
+            <td class="rule-cell">JS-EVAL-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Use of eval() can lead to code execution</td>
+            <td><code>eval(payload); // SINK</code></td>
+            <td>Avoid eval(); use safe parsers or functions</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">45</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input flows into innerHTML assignment → DOM XSS</td>
+            <td><code>container.innerHTML = &#x27;&lt;h3&gt;Search:&lt;/h3&gt;&#x27; + untrusted1; // SINK</code></td>
+            <td>Use textContent or sanitize with DOMPurify</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">208</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input flows into innerHTML assignment → DOM XSS</td>
+            <td><code>a.innerHTML = &#x27;&lt;a href=&quot;&#x27; + u + &#x27;&quot;&gt;go&lt;/a&gt;&#x27;; // SINK</code></td>
+            <td>Use textContent or sanitize with DOMPurify</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">126</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span> <span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag cwe'>CWE-338</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>const token = Math.random().toString(36).slice(2); // SINK</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">102</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag owasp'>A10:2021-Logging&amp;amp;MonitoringFailures</span> <span class='tag cwe'>CWE-200</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>console.log(&#x27;Fetched length (insecure):&#x27;, (await res.text()).length);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">127</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span> <span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag owasp'>A10:2021-Logging&amp;amp;MonitoringFailures</span> <span class='tag cwe'>CWE-200</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>console.log(&#x27;Weak token:&#x27;, token);</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">152</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag owasp'>A10:2021-Logging&amp;amp;MonitoringFailures</span> <span class='tag cwe'>CWE-200</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>console.log(&#x27;Polluted?&#x27;, (check).pwned === true);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">181</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag owasp'>A10:2021-Logging&amp;amp;MonitoringFailures</span> <span class='tag cwe'>CWE-200</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>console.log(&#x27;Testing user regex length=&#x27;, pattern.length);</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">114</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span> <span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-922</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>localStorage.setItem(&#x27;authToken&#x27;, t); // SINK</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">191</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span> <span class='tag cwe'>CWE-346</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>window.addEventListener(&#x27;message&#x27;, (ev) =&gt; {</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">32</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span> <span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>token: () =&gt; getParam(&#x27;token&#x27;),</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">112</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>const t = SRC.token(); // SOURCE</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">118</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span> <span class='tag owasp'>A05:2021-SecurityMisconfiguration</span> <span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>document.cookie = &#x27;session=&#x27; + encodeURIComponent(SRC.token() || &#x27;demo&#x27;) + &#x27;; path=/&#x27;; // SINK</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">125</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Secrets</td>
+            <td class="rule-cell">GEN-HEUR-003<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Possible hardcoded secret or credential detected</td>
+            <td><code>// VULN: V011 — Insecure Randomness — security token via Math.random</code></td>
+            <td>Move secrets to environment variables or a secure vault</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">72</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Exception Handling</td>
+            <td class="rule-cell">GEN-HEUR-012<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span></td>
+            <td>Empty catch block found, errors may be silently ignored</td>
+            <td><code>try { f(); } catch (e) {}</code></td>
+            <td>Log or handle exceptions securely</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">103</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Exception Handling</td>
+            <td class="rule-cell">GEN-HEUR-012<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span></td>
+            <td>Empty catch block found, errors may be silently ignored</td>
+            <td><code>} catch (e) {}</code></td>
+            <td>Log or handle exceptions securely</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">153</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Exception Handling</td>
+            <td class="rule-cell">GEN-HEUR-012<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span></td>
+            <td>Empty catch block found, errors may be silently ignored</td>
+            <td><code>} catch (e) {}</code></td>
+            <td>Log or handle exceptions securely</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">183</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Exception Handling</td>
+            <td class="rule-cell">GEN-HEUR-012<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span></td>
+            <td>Empty catch block found, errors may be silently ignored</td>
+            <td><code>} catch (e) {}</code></td>
+            <td>Log or handle exceptions securely</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">233</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Exception Handling</td>
+            <td class="rule-cell">GEN-HEUR-012<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span></td>
+            <td>Empty catch block found, errors may be silently ignored</td>
+            <td><code>} catch (e) {}</code></td>
+            <td>Log or handle exceptions securely</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">77</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code Injection</td>
+            <td class="rule-cell">JS-CTX-002<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>Dangerous dynamic code execution (Function, setTimeout, setInterval) with untrusted input</td>
+            <td><code>if (later) setTimeout(later, 50); // SINK (string form)</code></td>
+            <td>Avoid passing untrusted input to code execution APIs; Validate or remove such usage</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">51</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Deprecated Apis</td>
+            <td class="rule-cell">GEN-HEUR-024<br><span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>document; write() is dangerous and deprecated</td>
+            <td><code>// VULN: V003 — DOM XSS — document.write with untrusted html</code></td>
+            <td>Use DOM manipulation APIs instead</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">54</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-003<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>User input passed to document; write → DOM XSS</td>
+            <td><code>document.write(&#x27;&lt;section&gt;&#x27; + untrusted3 + &#x27;&lt;/section&gt;&#x27;); // SINK</code></td>
+            <td>Avoid document; write; use safe DOM methods</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">71</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code Injection</td>
+            <td class="rule-cell">JS-FUNCTION-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Use of Function constructor is dangerous</td>
+            <td><code>const f = new Function(&#x27;return (&#x27; + fnBody + &#x27;)&#x27;); // SINK</code></td>
+            <td>Avoid Function(); use safer alternatives</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">26</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>q: () =&gt; getParam(&#x27;q&#x27;),</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">27</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>json: () =&gt; getParam(&#x27;json&#x27;),</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">28</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>url: () =&gt; getParam(&#x27;url&#x27;),</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">29</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>html: () =&gt; getParam(&#x27;html&#x27;),</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">30</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>code: () =&gt; getParam(&#x27;code&#x27;),</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">31</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>target: () =&gt; getParam(&#x27;target&#x27;),</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">33</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>re: () =&gt; getParam(&#x27;re&#x27;),</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">34</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>msg: () =&gt; getParam(&#x27;msg&#x27;)</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">41</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-003<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input passed to document; write → DOM XSS</td>
+            <td><code>const container = document.getElementById(&#x27;out1&#x27;) || document.body;</code></td>
+            <td>Avoid document; write; use safe DOM methods</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">49</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-002<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input flows into insertAdjacentHTML → DOM XSS</td>
+            <td><code>container.insertAdjacentHTML(&#x27;beforeend&#x27;, &#x27;&lt;div class=&quot;result&quot;&gt;&#x27; + untrusted2 + &#x27;&lt;/div&gt;&#x27;); // SINK</code></td>
+            <td>Use DOM APIs safely or sanitize with DOMPurify</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">161</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-003<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input passed to document; write → DOM XSS</td>
+            <td><code>const btn = document.getElementById(&#x27;dangerBtn&#x27;) || document.createElement(&#x27;button&#x27;);</code></td>
+            <td>Avoid document; write; use safe DOM methods</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">166</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>btn.setAttribute(&#x27;onclick&#x27;, handler); // SINK</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">193</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>if (typeof ev.data === &#x27;string&#x27; &amp;&amp; ev.data.startsWith(&#x27;RUN:&#x27;)) {</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">207</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-003<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input passed to document; write → DOM XSS</td>
+            <td><code>const a = document.createElement(&#x27;div&#x27;);</code></td>
+            <td>Avoid document; write; use safe DOM methods</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">219</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-003<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input passed to document; write → DOM XSS</td>
+            <td><code>const el = document.createElement(&#x27;div&#x27;);</code></td>
+            <td>Avoid document; write; use safe DOM methods</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">220</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>el.setAttribute(&#x27;style&#x27;, v); // SINK</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">232</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">JS-TIMEOUT-AST-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>setTimeout called with a string → dynamic code execution like eval()</td>
+            <td><code>await fetch(&#x27;/api/echo&#x27;, { headers: { &#x27;X-Note&#x27;: msg } }); // SINK (potential splitting on some servers)</code></td>
+            <td>Pass a function reference instead of a string</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">243</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-003<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input passed to document; write → DOM XSS</td>
+            <td><code>const c = document.getElementById(&#x27;out2&#x27;) || document.body;</code></td>
+            <td>Avoid document; write; use safe DOM methods</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">254</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-003<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input passed to document; write → DOM XSS</td>
+            <td><code>const link = document.createElement(&#x27;a&#x27;);</code></td>
+            <td>Avoid document; write; use safe DOM methods</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">244</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">JS-DOMXSS-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input flows into innerHTML assignment → DOM XSS</td>
+            <td><code>c.innerHTML += &#x27;&lt;p&gt;&#x27; + extra + &#x27;&lt;/p&gt;&#x27;; // SINK</code></td>
+            <td>Use textContent or sanitize with DOMPurify</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">19</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code Injection</td>
+            <td class="rule-cell">JS-EVAL-TAINT-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>eval() with user input → Remote Code Execution</td>
+            <td><code>const m = new RegExp(&#x27;[?&amp;]&#x27; + name + &#x27;=([^&amp;#]*)&#x27;).exec(location.search);</code></td>
+            <td>Avoid eval(); use JSON; parse or safe parsers</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">255</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Open Redirect</td>
+            <td class="rule-cell">JS-OPENREDIRECT-001<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span> <span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>User input assigned to location; href → Open Redirect</td>
+            <td><code>link.href = u; // SINK</code></td>
+            <td>Validate URLs against an allowlist</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">101</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Data Exfiltration</td>
+            <td class="rule-cell">JS-FETCH-001<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>User-controlled fetch() with credentials → sensitive data exfiltration</td>
+            <td><code>const res = await fetch(u, { credentials: &#x27;include&#x27; }); // SINK</code></td>
+            <td>Validate destination URLs and avoid credentials: &#x27;include&#x27; with untrusted URLs</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/js/app4.js</td>
+            <td style="text-align:right">179</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Redos</td>
+            <td class="rule-cell">JS-REDOS-001<br><span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>User-controlled regex pattern may cause ReDoS</td>
+            <td><code>const re = new RegExp(pattern); // SINK</code></td>
+            <td>Validate regex input or use safe-regex libraries</td>
+            <td>Context-AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index.php</td>
+            <td style="text-align:right">12</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Command Execution</td>
+            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Command execution can lead to injection if args are tainted</td>
+            <td><code>if(isset($_GET[&#x27;cmd&#x27;])){</code></td>
+            <td>Avoid shell execution; use built-in APIs and strict validation</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index.php</td>
+            <td style="text-align:right">8</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Cross-Site Scripting</td>
+            <td class="rule-cell">PHP-XSS-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Echoing unescaped user input can cause XSS</td>
+            <td><code>echo $_GET[&#x27;html&#x27;]; // XSS</code></td>
+            <td>Encode output with htmlspecialchars and validate inputs</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/php/index.php</td>
+            <td style="text-align:right">10</td>
             <td><span class="sev sev-medium">MEDIUM</span></td>
             <td>Weak Cryptography</td>
             <td class="rule-cell">PHP-CRYPTO-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
             <td>Weak hash algorithm used</td>
-            <td><code>$hash = md5($_POST[&#x27;pwd&#x27;]);</code></td>
+            <td><code>$hash = md5($_GET[&#x27;p&#x27;]); // weak crypto</code></td>
             <td>Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes</td>
             <td>Heuristic</td>
           </tr>
         
           <tr class="row-low">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">104</td>
+            <td>samples/php/index.php</td>
+            <td style="text-align:right">19</td>
             <td><span class="sev sev-low">LOW</span></td>
             <td>Error Handling</td>
-            <td class="rule-cell">PHP-ERROR-LEAK-001<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span></td>
+            <td class="rule-cell">PHP-ERROR-LEAK-001<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag owasp'>A10:2021-Logging&amp;amp;MonitoringFailures</span></td>
             <td>Leaking raw errors or phpinfo() reveals sensitive info</td>
-            <td><code>phpinfo();</code></td>
+            <td><code>var_dump($e); // error leak</code></td>
             <td>Log errors server-side and show generic error messages</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/php/index.php</td>
+            <td style="text-align:right">2</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Error Handling</td>
+            <td class="rule-cell">PHP-NO-DB-ERROR-HANDLING-001<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag cwe'>CWE-252</span></td>
+            <td>Database connection created without proper error handling</td>
+            <td><code>$mysqli = new mysqli(&quot;localhost&quot;,&quot;root&quot;,&quot;&quot;,&quot;db&quot;);</code></td>
+            <td>Always wrap database connections in try/catch and log errors securely</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index.php</td>
+            <td style="text-align:right">13</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Command Execution</td>
+            <td class="rule-cell">PHP-SYSTEM-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>system() detected in PHP AST; may allow command injection</td>
+            <td><code>system(&quot;ls &quot; . $_GET[&#x27;cmd&#x27;]); // command injection</code></td>
+            <td>Avoid system(); use safer built-in APIs</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">4</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">PHP-EVAL-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Use of eval() can lead to code injection</td>
+            <td><code>eval($code); // ❌ Dangerous</code></td>
+            <td>Avoid eval(); use safer alternatives</td>
             <td>Regex</td>
           </tr>
         
           <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">20</td>
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">7</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Command Execution</td>
+            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Command execution can lead to injection if args are tainted</td>
+            <td><code>$file = $_GET[&#x27;file&#x27;];</code></td>
+            <td>Avoid shell execution; use built-in APIs and strict validation</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">18</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Weak Cryptography</td>
+            <td class="rule-cell">PHP-CRYPTO-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Weak hash algorithm used</td>
+            <td><code>$hash1 = md5($password);   // ❌ Weak hash</code></td>
+            <td>Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">19</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Weak Cryptography</td>
+            <td class="rule-cell">PHP-CRYPTO-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Weak hash algorithm used</td>
+            <td><code>$hash2 = sha1($password);  // ❌ Weak hash</code></td>
+            <td>Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">14</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>Sql Injection</td>
-            <td class="rule-cell">PHP-MYSQL-LEGACY-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>Use of deprecated mysql_* API with untrusted input allows SQL Injection</td>
-            <td><code>$res = mysql_query(&quot;SELECT * FROM users WHERE id=$id&quot;); // vuln: SQLi</code></td>
-            <td>Migrate to mysqli or PDO with prepared statements</td>
+            <td class="rule-cell">PHP-MYSQLI-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Use of mysqli_query with untrusted input may lead to SQL Injection</td>
+            <td><code>$result = mysqli_query($conn, $query);</code></td>
+            <td>Always use prepared statements (mysqli_stmt or PDO)</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">22</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>File Inclusion</td>
+            <td class="rule-cell">PHP-INCLUDE-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>Dynamic include/require detected; May allow LFI/RFI</td>
+            <td><code>$page = $_GET[&#x27;page&#x27;];</code></td>
+            <td>Never include user input in include/require paths; Use whitelists</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">38</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Insecure File Upload</td>
+            <td class="rule-cell">PHP-UPLOAD-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>File upload without validation detected</td>
+            <td><code>move_uploaded_file($_FILES[&#x27;file&#x27;][&#x27;tmp_name&#x27;], &quot;uploads/&quot; . $_FILES[&#x27;file&#x27;][&#x27;name&#x27;]); // ❌ No checks</code></td>
+            <td>Validate file type, size, extension; randomize name; store outside web root</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-low">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">42</td>
+            <td><span class="sev sev-low">LOW</span></td>
+            <td>Session Handling</td>
+            <td class="rule-cell">PHP-HEUR-023<br><span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
+            <td>Session start detected, ensure secure flags are set</td>
+            <td><code>session_start(); // ❌ No secure cookie flags</code></td>
+            <td>Use secure session cookies (HttpOnly, Secure, SameSite)</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">8</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Command Execution</td>
+            <td class="rule-cell">PHP-SYSTEM-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>system() detected in PHP AST; may allow command injection</td>
+            <td><code>system(&quot;cat &quot; . $file); // ❌ Dangerous</code></td>
+            <td>Avoid system(); use safer built-in APIs</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index2.php</td>
+            <td style="text-align:right">23</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>File Inclusion</td>
+            <td class="rule-cell">PHP-INCLUDE-AST-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>Dynamic include/require detected</td>
+            <td><code>include($page . &quot;.php&quot;); // ❌ Insecure include</code></td>
+            <td>Never use user input in include/require paths; Use whitelists</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index3.php</td>
+            <td style="text-align:right">27</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Path Traversal</td>
+            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span> <span class='tag owasp'>A10:2021-SSRF</span></td>
+            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
+            <td><code>$response = file_get_contents(&quot;http://&quot; . $url);</code></td>
+            <td>Avoid using unvalidated input in file_get_contents</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index3.php</td>
+            <td style="text-align:right">34</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Path Traversal</td>
+            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
+            <td><code>$data = file_get_contents($filename);</code></td>
+            <td>Avoid using unvalidated input in file_get_contents</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index3.php</td>
+            <td style="text-align:right">6</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Broken Access Control</td>
+            <td class="rule-cell">PHP-AUTH-CHECK-001<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
+            <td>Access control decision appears to be based on user input</td>
+            <td><code>if ($_GET[&#x27;role&#x27;] === &#x27;admin&#x27;) {</code></td>
+            <td>Enforce server-side authorization using session or token checks</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index3.php</td>
+            <td style="text-align:right">14</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Insecure Design</td>
+            <td class="rule-cell">PHP-HARDCODED-SECRET-002<br><span class='tag owasp'>A04:2021-InsecureDesign</span></td>
+            <td>Hardcoded secret or token detected</td>
+            <td><code>$secret = &quot;mySuperSecretApiKey123&quot;;</code></td>
+            <td>Use environment variables or a secrets manager</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index3.php</td>
+            <td style="text-align:right">20</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Outdated Components</td>
+            <td class="rule-cell">PHP-OUTDATED-MYSQL-001<br><span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
+            <td>Use of deprecated mysql_connect() detected</td>
+            <td><code>$conn = mysql_connect(&quot;localhost&quot;, &quot;root&quot;, &quot;password&quot;);</code></td>
+            <td>Migrate to PDO or mysqli with prepared statements</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index4.php</td>
+            <td style="text-align:right">6</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Command Execution</td>
+            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Command execution can lead to injection if args are tainted</td>
+            <td><code>echo preg_replace(&quot;/.*/e&quot;, &quot;system(&#x27;ls&#x27;)&quot;, $input);</code></td>
+            <td>Avoid shell execution; use built-in APIs and strict validation</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index4.php</td>
+            <td style="text-align:right">13</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>File Inclusion</td>
+            <td class="rule-cell">PHP-INCLUDE-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>Dynamic include/require detected; May allow LFI/RFI</td>
+            <td><code>$file = $_GET[&#x27;page&#x27;];</code></td>
+            <td>Never include user input in include/require paths; Use whitelists</td>
             <td>Regex</td>
           </tr>
         
           <tr class="row-critical">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">73</td>
+            <td>samples/php/index4.php</td>
+            <td style="text-align:right">10</td>
             <td><span class="sev sev-critical">CRITICAL</span></td>
-            <td>Sql Injection</td>
-            <td class="rule-cell">PHP-SQL-TAINT<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-89</span></td>
-            <td>User-controlled input flows into SQL query without sanitization</td>
-            <td><code>mysql_query(&quot;UPDATE users SET email=&#x27;{$_POST[&#x27;email&#x27;]}&#x27; WHERE id=1&quot;);</code></td>
-            <td>Use prepared statements (parameterized queries)</td>
-            <td>Regex+AST(Taint)</td>
+            <td>Insecure Deserialization</td>
+            <td class="rule-cell">PHP-UNSERIALIZE-AST-001<br><span class='tag owasp'>A08:2021-SoftwareandDataIntegrityFailures</span></td>
+            <td>unserialize() called in AST; Dangerous with untrusted input</td>
+            <td><code>$obj = unserialize($data);</code></td>
+            <td>Avoid unserialize(); prefer JSON or validate inputs</td>
+            <td>AST</td>
           </tr>
         
           <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">92</td>
+            <td>samples/php/index4.php</td>
+            <td style="text-align:right">14</td>
             <td><span class="sev sev-high">HIGH</span></td>
-            <td>Sql Injection</td>
-            <td class="rule-cell">PHP-MYSQL-LEGACY-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>Use of deprecated mysql_* API with untrusted input allows SQL Injection</td>
-            <td><code>mysql_query(&quot;INSERT INTO users (username, password) VALUES (&#x27;$u&#x27;,&#x27;$p&#x27;)&quot;);</code></td>
-            <td>Migrate to mysqli or PDO with prepared statements</td>
+            <td>File Inclusion</td>
+            <td class="rule-cell">PHP-INCLUDE-AST-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>Dynamic include/require detected</td>
+            <td><code>include($file);</code></td>
+            <td>Never use user input in include/require paths; Use whitelists</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index5.php</td>
+            <td style="text-align:right">22</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Command Execution</td>
+            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Command execution can lead to injection if args are tainted</td>
+            <td><code>if (isset($_GET[&#x27;cmd&#x27;])) {</code></td>
+            <td>Avoid shell execution; use built-in APIs and strict validation</td>
             <td>Regex</td>
           </tr>
         
           <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">32</td>
+            <td>samples/php/index5.php</td>
+            <td style="text-align:right">27</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>File Inclusion</td>
             <td class="rule-cell">PHP-INCLUDE-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
@@ -532,153 +2815,9 @@ function downloadHTML() {
             <td>Regex</td>
           </tr>
         
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">44</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Path Traversal</td>
-            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
-            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
-            <td><code>echo file_get_contents(&quot;uploads/&quot; . $file);</code></td>
-            <td>Avoid using unvalidated input in file_get_contents</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">116</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Path Traversal</td>
-            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
-            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
-            <td><code>$ctx = stream_context_create([&quot;ssl&quot;=&gt;[&quot;verify_peer&quot;=&gt;false]]);</code></td>
-            <td>Avoid using unvalidated input in file_get_contents</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">134</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Path Traversal</td>
-            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
-            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
-            <td><code>$b = file_get_contents(&quot;balance.txt&quot;);</code></td>
-            <td>Avoid using unvalidated input in file_get_contents</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-critical">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">68</td>
-            <td><span class="sev sev-critical">CRITICAL</span></td>
-            <td>Insecure Deserialization</td>
-            <td class="rule-cell">PHP-UNSERIALIZE-AST-001<br><span class='tag owasp'>A08:2021-SoftwareandDataIntegrityFailures</span></td>
-            <td>unserialize() called in AST; Dangerous with untrusted input</td>
-            <td><code>$obj = unserialize($_POST[&#x27;data&#x27;]);</code></td>
-            <td>Avoid unserialize(); prefer JSON or validate inputs</td>
-            <td>AST</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">38</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Insecure File Upload</td>
-            <td class="rule-cell">PHP-UPLOAD-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
-            <td>File upload without validation detected</td>
-            <td><code>move_uploaded_file($_FILES[&#x27;file&#x27;][&#x27;tmp_name&#x27;], &quot;uploads/&quot; . $_FILES[&#x27;file&#x27;][&#x27;name&#x27;]);</code></td>
-            <td>Validate file type, size, extension; randomize name; store outside web root</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">101</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Broken Access Control</td>
-            <td class="rule-cell">PHP-AUTH-CHECK-001<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span> <span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
-            <td>Access control decision appears to be based on user input</td>
-            <td><code>setcookie(&quot;auth&quot;, $_GET[&#x27;auth&#x27;] ?? &quot;none&quot;);</code></td>
-            <td>Enforce server-side authorization using session or token checks</td>
-            <td>AST</td>
-          </tr>
-        
-          <tr class="row-critical">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">72</td>
-            <td><span class="sev sev-critical">CRITICAL</span></td>
-            <td>Sql Injection</td>
-            <td class="rule-cell">PHP-SQLI-002<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-89</span></td>
-            <td>Potential SQL injection vulnerability</td>
-            <td><code>if (isset($_POST[&#x27;updateEmail&#x27;])) {</code></td>
-            <td>Use prepared statements or parameterized queries; Validate all inputs</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">83</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Broken Access Control</td>
-            <td class="rule-cell">PHP-AUTH-CHECK-001<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
-            <td>Access control decision appears to be based on user input</td>
-            <td><code>if ($_GET[&#x27;user&#x27;] == $admin_user &amp;&amp; $_GET[&#x27;pass&#x27;] == $admin_pass) {</code></td>
-            <td>Enforce server-side authorization using session or token checks</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">110</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Insecure Design</td>
-            <td class="rule-cell">PHP-HARDCODED-SECRET-002<br><span class='tag owasp'>A04:2021-InsecureDesign</span></td>
-            <td>Hardcoded secret or token detected</td>
-            <td><code>$apiKey = &quot;SECRET-API-KEY-123&quot;;</code></td>
-            <td>Use environment variables or a secrets manager</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">14</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Outdated Components</td>
-            <td class="rule-cell">PHP-OUTDATED-MYSQL-001<br><span class='tag owasp'>A06:2021-VulnerableandOutdatedComponents</span></td>
-            <td>Use of deprecated mysql_connect() detected</td>
-            <td><code>$conn = mysql_connect(&quot;localhost&quot;, &quot;root&quot;, &quot;root&quot;);</code></td>
-            <td>Migrate to PDO or mysqli with prepared statements</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">117</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Ssrf</td>
-            <td class="rule-cell">PHP-SSRF-001<br><span class='tag owasp'>A10:2021-SSRF</span></td>
-            <td>Potential SSRF: fetching external URL without validation</td>
-            <td><code>file_get_contents(&quot;https://untrusted-site.com/data&quot;, false, $ctx);</code></td>
-            <td>Validate and whitelist remote URLs before requesting</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">78</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Injection</td>
-            <td class="rule-cell">php-header-injection<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
-            <td>Unvalidated redirects via header() can lead to Open Redirect or CRLF Injection</td>
-            <td><code>header(&quot;Location: &quot; . $_GET[&#x27;url&#x27;]);</code></td>
-            <td>Sanitize and validate redirect URLs; Use a fixed set of allowed destinations</td>
-            <td>Regex</td>
-          </tr>
-        
           <tr class="row-low">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">53</td>
+            <td>samples/php/index5.php</td>
+            <td style="text-align:right">32</td>
             <td><span class="sev sev-low">LOW</span></td>
             <td>Session Handling</td>
             <td class="rule-cell">PHP-HEUR-023<br><span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
@@ -689,27 +2828,147 @@ function downloadHTML() {
           </tr>
         
           <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">28</td>
+            <td>samples/php/index5.php</td>
+            <td style="text-align:right">6</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Sensitive Info Disclosure</td>
+            <td class="rule-cell">PHP-HARDCODED-CREDS-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span> <span class='tag cwe'>CWE-798</span></td>
+            <td>Hardcoded database username detected</td>
+            <td><code>$username = &quot;root&quot;;</code></td>
+            <td>Use environment variables or config files instead of hardcoding credentials</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/php/index5.php</td>
+            <td style="text-align:right">11</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Error Handling</td>
+            <td class="rule-cell">PHP-NO-DB-ERROR-HANDLING-001<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag cwe'>CWE-252</span></td>
+            <td>Database connection created without proper error handling</td>
+            <td><code>$conn = new mysqli($servername, $username, $password, $dbname);</code></td>
+            <td>Always wrap database connections in try/catch and log errors securely</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index5.php</td>
+            <td style="text-align:right">23</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>Command Execution</td>
             <td class="rule-cell">PHP-SYSTEM-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
             <td>system() detected in PHP AST; may allow command injection</td>
-            <td><code>system(&quot;ping -c 1 &quot; . $_GET[&#x27;ping&#x27;]);</code></td>
+            <td><code>system($_GET[&#x27;cmd&#x27;]);</code></td>
             <td>Avoid system(); use safer built-in APIs</td>
             <td>AST</td>
           </tr>
         
           <tr class="row-high">
-            <td>uploads\sample2.php</td>
-            <td style="text-align:right">33</td>
+            <td>samples/php/index5.php</td>
+            <td style="text-align:right">28</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>File Inclusion</td>
             <td class="rule-cell">PHP-INCLUDE-AST-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
             <td>Dynamic include/require detected</td>
-            <td><code>include($_GET[&#x27;page&#x27;] . &quot;.php&quot;);</code></td>
+            <td><code>include($_GET[&#x27;page&#x27;]);</code></td>
             <td>Never use user input in include/require paths; Use whitelists</td>
             <td>AST</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/php/index6.php</td>
+            <td style="text-align:right">7</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Path Traversal</td>
+            <td class="rule-cell">PHP-FILE-READ-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
+            <td>file_get_contents on user input may allow path traversal / arbitrary file read</td>
+            <td><code>$code = file_get_contents($argv[1] ?? &quot;test.php&quot;);</code></td>
+            <td>Avoid using unvalidated input in file_get_contents</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/php/index6.php</td>
+            <td style="text-align:right">4</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Superglobals</td>
+            <td class="rule-cell">PHP-HEUR-021<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
+            <td>Use of PHP superglobal $_REQUEST detected</td>
+            <td><code>* Detects if user input ($_GET, $_POST, $_REQUEST) flows into dangerous sinks</code></td>
+            <td>Use $_GET or $_POST explicitly and validate input</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>samples/php/index6.php</td>
+            <td style="text-align:right">10</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Superglobals</td>
+            <td class="rule-cell">PHP-HEUR-021<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
+            <td>Use of PHP superglobal $_REQUEST detected</td>
+            <td><code>$sources = [&quot;\$_GET&quot;, &quot;\$_POST&quot;, &quot;\$_REQUEST&quot;];</code></td>
+            <td>Use $_GET or $_POST explicitly and validate input</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/java/jav1.java</td>
+            <td style="text-align:right">81</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Command Injection</td>
+            <td class="rule-cell">JAVA-RUNTIME-EXEC-REGEX<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-78</span></td>
+            <td>Runtime; getRuntime(); exec() detected</td>
+            <td><code>Process p = Runtime.getRuntime().exec(cmd);</code></td>
+            <td>Avoid direct exec(); use ProcessBuilder with validated args</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/java/jav1.java</td>
+            <td style="text-align:right">98</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Sql Injection</td>
+            <td class="rule-cell">JAVA-SQL-HEURISTIC<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-89</span></td>
+            <td>Concatenating SQL queries with user input is dangerous</td>
+            <td><code>String sql = &quot;SELECT * FROM users WHERE username = &#x27;&quot; + user + &quot;&#x27;&quot;;</code></td>
+            <td>Use PreparedStatement with bind parameters</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/java/jav1.java</td>
+            <td style="text-align:right">123</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Insecure Deserialization</td>
+            <td class="rule-cell">JAVA-DESERIALIZE-AST<br><span class='tag owasp'>A08:2021-SoftwareandDataIntegrityFailures</span> <span class='tag cwe'>CWE-502</span></td>
+            <td>ObjectInputStream; readObject() detected</td>
+            <td><code>Object obj = ois.readObject();</code></td>
+            <td>Avoid deserialization of untrusted data</td>
+            <td>AST</td>
+          </tr>
+        
+          <tr class="row-critical">
+            <td>samples/python/py1.py</td>
+            <td style="text-align:right">8</td>
+            <td><span class="sev sev-critical">CRITICAL</span></td>
+            <td>Code Injection</td>
+            <td class="rule-cell">PY-EVAL-REGEX<br><span class='tag owasp'>A03:2021-Injection</span> <span class='tag cwe'>CWE-94</span></td>
+            <td>Use of eval() can lead to code execution</td>
+            <td><code>eval(user_input)   # VULN: PY-EVAL-REGEX + PY-EVAL-TAINT</code></td>
+            <td>Avoid eval(); use ast; literal_eval if parsing data</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>samples/python/py1.py</td>
+            <td style="text-align:right">12</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Insecure Deserialization</td>
+            <td class="rule-cell">PY-PICKLE-LOAD-HEURISTIC<br><span class='tag owasp'>A08:2021-SoftwareandDataIntegrityFailures</span> <span class='tag cwe'>CWE-502</span></td>
+            <td>Use of pickle; load() is unsafe with untrusted input</td>
+            <td><code>obj = pickle.load(f)  # VULN: PY-PICKLE-LOAD-HEURISTIC</code></td>
+            <td>Avoid pickle with untrusted data; use JSON or safer libraries</td>
+            <td>Heuristic</td>
           </tr>
         
   </tbody>
