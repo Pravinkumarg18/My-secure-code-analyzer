@@ -58,86 +58,112 @@ function downloadJSON() {
   const content = `[
   {
     "id": "PHP-SYSTEM-EXEC-001",
-    "file": "uploads\\\\samp1.php",
-    "line": 34,
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 120,
     "severity": "HIGH",
     "category": "Command Execution",
     "message": "Command execution can lead to injection if args are tainted.",
     "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "echo \\"<pre>\\";",
+    "snippet": "// 11. Unsafe use of exec() with user input",
     "detected_by": "Regex"
   },
   {
-    "id": "PHP-ERROR-LEAK-001",
-    "file": "uploads\\\\samp1.php",
-    "line": 9,
-    "severity": "LOW",
-    "category": "Error Handling",
-    "message": "Leaking raw errors or phpinfo() reveals sensitive info.",
-    "suggestion": "Log errors server-side and show generic error messages.",
-    "owasp": "A09:2021-SecurityLoggingandMonitoringFailures,A10:2021-Logging&MonitoringFailures",
+    "id": "PHP-SYSTEM-EXEC-001",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 124,
+    "severity": "HIGH",
+    "category": "Command Execution",
+    "message": "Command execution can lead to injection if args are tainted.",
+    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
+    "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "die(\\"DB Connection Failed: \\" . mysqli_connect_error());",
+    "snippet": "// Unsafe execution of user input",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-SYSTEM-EXEC-001",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 322,
+    "severity": "HIGH",
+    "category": "Command Execution",
+    "message": "Command execution can lead to injection if args are tainted.",
+    "suggestion": "Avoid shell execution; use built-in APIs and strict validation.",
+    "owasp": "A03:2021-Injection",
+    "cwe": "",
+    "snippet": "<li>exec - exec() Injection</li>",
+    "detected_by": "Regex"
+  },
+  {
+    "id": "PHP-CRYPTO-001",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 54,
+    "severity": "MEDIUM",
+    "category": "Weak Cryptography",
+    "message": "Weak hash algorithm used.",
+    "suggestion": "Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes.",
+    "owasp": "A02:2021-CryptographicFailures",
+    "cwe": "",
+    "snippet": "if (md5($password) === $stored_hash) {",
     "detected_by": "Heuristic"
   },
   {
-    "id": "PHP-MYSQLI-001",
-    "file": "uploads\\\\samp1.php",
-    "line": 20,
-    "severity": "HIGH",
-    "category": "Sql Injection",
-    "message": "Use of mysqli_query with untrusted input may lead to SQL Injection.",
-    "suggestion": "Always use prepared statements (mysqli_stmt or PDO).",
-    "owasp": "A03:2021-Injection",
+    "id": "PHP-CRYPTO-001",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 114,
+    "severity": "MEDIUM",
+    "category": "Weak Cryptography",
+    "message": "Weak hash algorithm used.",
+    "suggestion": "Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes.",
+    "owasp": "A02:2021-CryptographicFailures",
     "cwe": "",
-    "snippet": "$result = mysqli_query($conn, $sql);",
+    "snippet": "if (md5($password) == $stored_hash) {",
+    "detected_by": "Heuristic"
+  },
+  {
+    "id": "PHP-MT-RAND-001",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 163,
+    "severity": "MEDIUM",
+    "category": "Weak Randomness",
+    "message": "Use of mt_rand() for security tokens is unsafe.",
+    "suggestion": "Use random_int() or random_bytes() instead.",
+    "owasp": "A02:2021-CryptographicFailures",
+    "cwe": "",
+    "snippet": "$token = mt_rand(); // Not cryptographically secure",
     "detected_by": "Regex"
   },
   {
-    "id": "PHP-INCLUDE-001",
-    "file": "uploads\\\\samp1.php",
-    "line": 43,
-    "severity": "HIGH",
-    "category": "File Inclusion",
-    "message": "Dynamic include/require detected. May allow LFI/RFI.",
-    "suggestion": "Never include user input in include/require paths. Use whitelists.",
-    "owasp": "A05:2021-SecurityMisconfiguration",
+    "id": "PHP-SESSION-001",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 67,
+    "severity": "MEDIUM",
+    "category": "Session Management",
+    "message": "Cookie set without Secure/HttpOnly/SameSite flags.",
+    "suggestion": "Always set cookies with HttpOnly, Secure, and SameSite=strict.",
+    "owasp": "A07:2021-IdentificationandAuthenticationFailures",
     "cwe": "",
-    "snippet": "$page = $_GET['page'];",
-    "detected_by": "Regex"
+    "snippet": "setcookie(\\"user_data\\", base64_encode(serialize($_SESSION)), time()+3600, \\"/\\", \\"\\", false, false);",
+    "detected_by": "AST"
   },
   {
-    "id": "PHP-INCLUDE-001",
-    "file": "uploads\\\\samp1.php",
-    "line": 112,
-    "severity": "HIGH",
-    "category": "File Inclusion",
-    "message": "Dynamic include/require detected. May allow LFI/RFI.",
-    "suggestion": "Never include user input in include/require paths. Use whitelists.",
-    "owasp": "A05:2021-SecurityMisconfiguration",
+    "id": "PHP-HEUR-021",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 74,
+    "severity": "MEDIUM",
+    "category": "Superglobals",
+    "message": "Use of PHP superglobal $_REQUEST detected.",
+    "suggestion": "Use $_GET or $_POST explicitly and validate input.",
+    "owasp": "A01:2021-BrokenAccessControl",
     "cwe": "",
-    "snippet": "<h2>Page Include (LFI/RFI)</h2>",
-    "detected_by": "Regex"
-  },
-  {
-    "id": "PHP-UPLOAD-001",
-    "file": "uploads\\\\samp1.php",
-    "line": 55,
-    "severity": "HIGH",
-    "category": "Insecure File Upload",
-    "message": "File upload without validation detected.",
-    "suggestion": "Validate file type, size, extension; randomize name; store outside web root.",
-    "owasp": "A05:2021-SecurityMisconfiguration",
-    "cwe": "",
-    "snippet": "move_uploaded_file($tmp, $filename);",
-    "detected_by": "Regex"
+    "snippet": "foreach ($_REQUEST as $key => $value) {",
+    "detected_by": "Heuristic"
   },
   {
     "id": "PHP-HEUR-023",
-    "file": "uploads\\\\samp1.php",
-    "line": 72,
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 64,
     "severity": "LOW",
     "category": "Session Handling",
     "message": "Session start detected, ensure secure flags are set.",
@@ -148,29 +174,29 @@ function downloadJSON() {
     "detected_by": "Heuristic"
   },
   {
-    "id": "PHP-SYSTEM-AST-001",
-    "file": "uploads\\\\samp1.php",
-    "line": 35,
+    "id": "PHP-EXEC-AST-001",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 125,
     "severity": "HIGH",
     "category": "Command Execution",
-    "message": "system() detected in PHP AST; may allow command injection.",
-    "suggestion": "Avoid system(); use safer built-in APIs.",
+    "message": "exec() detected in PHP AST; may allow command injection.",
+    "suggestion": "Avoid exec(); use safer built-in APIs.",
     "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "system(\\"ping -c 2 \\" . $host); // vulnerable",
+    "snippet": "exec(\\"ls -la \\" . $command, $output);",
     "detected_by": "AST"
   },
   {
-    "id": "PHP-INCLUDE-AST-001",
-    "file": "uploads\\\\samp1.php",
-    "line": 44,
+    "id": "PHP-PREG-REPLACE-AST-001",
+    "file": "uploads\\\\deepseek_php.php",
+    "line": 147,
     "severity": "HIGH",
-    "category": "File Inclusion",
-    "message": "Dynamic include/require detected.",
-    "suggestion": "Never use user input in include/require paths. Use whitelists.",
-    "owasp": "A05:2021-SecurityMisconfiguration",
+    "category": "Dangerous Function",
+    "message": "preg_replace with /e modifier executes code \\u2192 RCE risk.",
+    "suggestion": "Use preg_replace_callback instead of /e.",
+    "owasp": "A03:2021-Injection",
     "cwe": "",
-    "snippet": "include($page . \\".php\\"); // vulnerable",
+    "snippet": "$result = preg_replace('/\\\\{(\\\\w+)\\\\}/e', '$data[\\"$1\\"]', $template);",
     "detected_by": "AST"
   }
 ]`;
@@ -184,7 +210,7 @@ function downloadHTML() {
 </head>
 <body>
 <h1>Secure Code Analyzer Report</h1>
-<small>Generated at: 2025-09-02 13:48:14 UTC</small>
+<small>Generated at: 2025-09-05 07:33:17 UTC</small>
 
 <div class="downloads">
   <button onclick="downloadJSON()">⬇ Download JSON</button>
@@ -204,7 +230,7 @@ function downloadHTML() {
   <label>OWASP:
     <select id="owaspFilter" onchange="filterTable()">
       <option value="ALL" selected>All</option>
-      <option value='A03:2021-Injection'>A03:2021-Injection</option><option value='A05:2021-SecurityMisconfiguration'>A05:2021-SecurityMisconfiguration</option><option value='A07:2021-IdentificationandAuthenticationFailures'>A07:2021-IdentificationandAuthenticationFailures</option><option value='A09:2021-SecurityLoggingandMonitoringFailures'>A09:2021-SecurityLoggingandMonitoringFailures</option><option value='A10:2021-Logging&MonitoringFailures'>A10:2021-Logging&MonitoringFailures</option>
+      <option value='A01:2021-BrokenAccessControl'>A01:2021-BrokenAccessControl</option><option value='A02:2021-CryptographicFailures'>A02:2021-CryptographicFailures</option><option value='A03:2021-Injection'>A03:2021-Injection</option><option value='A07:2021-IdentificationandAuthenticationFailures'>A07:2021-IdentificationandAuthenticationFailures</option>
     </select>
   </label>
   <label>CWE:
@@ -230,80 +256,104 @@ function downloadHTML() {
   <tbody id="tbody">
     
           <tr class="row-high">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">34</td>
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">120</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>Command Execution</td>
             <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
             <td>Command execution can lead to injection if args are tainted</td>
-            <td><code>echo &quot;&lt;pre&gt;&quot;;</code></td>
+            <td><code>// 11. Unsafe use of exec() with user input</code></td>
             <td>Avoid shell execution; use built-in APIs and strict validation</td>
             <td>Regex</td>
           </tr>
         
-          <tr class="row-low">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">9</td>
-            <td><span class="sev sev-low">LOW</span></td>
-            <td>Error Handling</td>
-            <td class="rule-cell">PHP-ERROR-LEAK-001<br><span class='tag owasp'>A09:2021-SecurityLoggingandMonitoringFailures</span> <span class='tag owasp'>A10:2021-Logging&amp;amp;MonitoringFailures</span></td>
-            <td>Leaking raw errors or phpinfo() reveals sensitive info</td>
-            <td><code>die(&quot;DB Connection Failed: &quot; . mysqli_connect_error());</code></td>
-            <td>Log errors server-side and show generic error messages</td>
+          <tr class="row-high">
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">124</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Command Execution</td>
+            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Command execution can lead to injection if args are tainted</td>
+            <td><code>// Unsafe execution of user input</code></td>
+            <td>Avoid shell execution; use built-in APIs and strict validation</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-high">
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">322</td>
+            <td><span class="sev sev-high">HIGH</span></td>
+            <td>Command Execution</td>
+            <td class="rule-cell">PHP-SYSTEM-EXEC-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>Command execution can lead to injection if args are tainted</td>
+            <td><code>&lt;li&gt;exec - exec() Injection&lt;/li&gt;</code></td>
+            <td>Avoid shell execution; use built-in APIs and strict validation</td>
+            <td>Regex</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">54</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Weak Cryptography</td>
+            <td class="rule-cell">PHP-CRYPTO-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Weak hash algorithm used</td>
+            <td><code>if (md5($password) === $stored_hash) {</code></td>
+            <td>Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes</td>
             <td>Heuristic</td>
           </tr>
         
-          <tr class="row-high">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">20</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Sql Injection</td>
-            <td class="rule-cell">PHP-MYSQLI-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>Use of mysqli_query with untrusted input may lead to SQL Injection</td>
-            <td><code>$result = mysqli_query($conn, $sql);</code></td>
-            <td>Always use prepared statements (mysqli_stmt or PDO)</td>
+          <tr class="row-medium">
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">114</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Weak Cryptography</td>
+            <td class="rule-cell">PHP-CRYPTO-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Weak hash algorithm used</td>
+            <td><code>if (md5($password) == $stored_hash) {</code></td>
+            <td>Use password_hash (bcrypt/argon2) or sodium/openssl strong hashes</td>
+            <td>Heuristic</td>
+          </tr>
+        
+          <tr class="row-medium">
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">163</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Weak Randomness</td>
+            <td class="rule-cell">PHP-MT-RAND-001<br><span class='tag owasp'>A02:2021-CryptographicFailures</span></td>
+            <td>Use of mt_rand() for security tokens is unsafe</td>
+            <td><code>$token = mt_rand(); // Not cryptographically secure</code></td>
+            <td>Use random_int() or random_bytes() instead</td>
             <td>Regex</td>
           </tr>
         
-          <tr class="row-high">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">43</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>File Inclusion</td>
-            <td class="rule-cell">PHP-INCLUDE-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
-            <td>Dynamic include/require detected; May allow LFI/RFI</td>
-            <td><code>$page = $_GET[&#x27;page&#x27;];</code></td>
-            <td>Never include user input in include/require paths; Use whitelists</td>
-            <td>Regex</td>
+          <tr class="row-medium">
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">67</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Session Management</td>
+            <td class="rule-cell">PHP-SESSION-001<br><span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
+            <td>Cookie set without Secure/HttpOnly/SameSite flags</td>
+            <td><code>setcookie(&quot;user_data&quot;, base64_encode(serialize($_SESSION)), time()+3600, &quot;/&quot;, &quot;&quot;, false, false);</code></td>
+            <td>Always set cookies with HttpOnly, Secure, and SameSite=strict</td>
+            <td>AST</td>
           </tr>
         
-          <tr class="row-high">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">112</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>File Inclusion</td>
-            <td class="rule-cell">PHP-INCLUDE-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
-            <td>Dynamic include/require detected; May allow LFI/RFI</td>
-            <td><code>&lt;h2&gt;Page Include (LFI/RFI)&lt;/h2&gt;</code></td>
-            <td>Never include user input in include/require paths; Use whitelists</td>
-            <td>Regex</td>
-          </tr>
-        
-          <tr class="row-high">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">55</td>
-            <td><span class="sev sev-high">HIGH</span></td>
-            <td>Insecure File Upload</td>
-            <td class="rule-cell">PHP-UPLOAD-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
-            <td>File upload without validation detected</td>
-            <td><code>move_uploaded_file($tmp, $filename);</code></td>
-            <td>Validate file type, size, extension; randomize name; store outside web root</td>
-            <td>Regex</td>
+          <tr class="row-medium">
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">74</td>
+            <td><span class="sev sev-medium">MEDIUM</span></td>
+            <td>Superglobals</td>
+            <td class="rule-cell">PHP-HEUR-021<br><span class='tag owasp'>A01:2021-BrokenAccessControl</span></td>
+            <td>Use of PHP superglobal $_REQUEST detected</td>
+            <td><code>foreach ($_REQUEST as $key =&gt; $value) {</code></td>
+            <td>Use $_GET or $_POST explicitly and validate input</td>
+            <td>Heuristic</td>
           </tr>
         
           <tr class="row-low">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">72</td>
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">64</td>
             <td><span class="sev sev-low">LOW</span></td>
             <td>Session Handling</td>
             <td class="rule-cell">PHP-HEUR-023<br><span class='tag owasp'>A07:2021-IdentificationandAuthenticationFailures</span></td>
@@ -314,26 +364,26 @@ function downloadHTML() {
           </tr>
         
           <tr class="row-high">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">35</td>
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">125</td>
             <td><span class="sev sev-high">HIGH</span></td>
             <td>Command Execution</td>
-            <td class="rule-cell">PHP-SYSTEM-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
-            <td>system() detected in PHP AST; may allow command injection</td>
-            <td><code>system(&quot;ping -c 2 &quot; . $host); // vulnerable</code></td>
-            <td>Avoid system(); use safer built-in APIs</td>
+            <td class="rule-cell">PHP-EXEC-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>exec() detected in PHP AST; may allow command injection</td>
+            <td><code>exec(&quot;ls -la &quot; . $command, $output);</code></td>
+            <td>Avoid exec(); use safer built-in APIs</td>
             <td>AST</td>
           </tr>
         
           <tr class="row-high">
-            <td>uploads\samp1.php</td>
-            <td style="text-align:right">44</td>
+            <td>uploads\deepseek_php.php</td>
+            <td style="text-align:right">147</td>
             <td><span class="sev sev-high">HIGH</span></td>
-            <td>File Inclusion</td>
-            <td class="rule-cell">PHP-INCLUDE-AST-001<br><span class='tag owasp'>A05:2021-SecurityMisconfiguration</span></td>
-            <td>Dynamic include/require detected</td>
-            <td><code>include($page . &quot;.php&quot;); // vulnerable</code></td>
-            <td>Never use user input in include/require paths; Use whitelists</td>
+            <td>Dangerous Function</td>
+            <td class="rule-cell">PHP-PREG-REPLACE-AST-001<br><span class='tag owasp'>A03:2021-Injection</span></td>
+            <td>preg_replace with /e modifier executes code → RCE risk</td>
+            <td><code>$result = preg_replace(&#x27;/\{(\w+)\}/e&#x27;, &#x27;$data[&quot;$1&quot;]&#x27;, $template);</code></td>
+            <td>Use preg_replace_callback instead of /e</td>
             <td>AST</td>
           </tr>
         

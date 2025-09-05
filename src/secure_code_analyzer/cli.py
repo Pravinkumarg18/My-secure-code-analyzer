@@ -9,6 +9,9 @@ from secure_code_analyzer.core.reporters import (
     generate_json_report,
     generate_html_report,
 )
+import zipfile
+import io
+import shutil
 
 # Default reports directory
 REPORTS_DIR = os.path.abspath("reports")
@@ -102,11 +105,49 @@ def serve_mode():
         uploaded_files = request.files.getlist("files")
         filepaths = []
 
+        # Clear uploads directory before saving new files
+        if os.path.exists("uploads"):
+            shutil.rmtree("uploads")
         os.makedirs("uploads", exist_ok=True)
+
         for f in uploaded_files:
-            path = os.path.join("uploads", f.filename)
-            f.save(path)
-            filepaths.append(path)
+            filename = f.filename
+            # Normalize path to prevent directory traversal attacks
+            safe_path = os.path.normpath(filename)
+            if safe_path.startswith("..") or os.path.isabs(safe_path):
+                # Reject files with unsafe paths
+                continue
+
+            # Check if file is a ZIP archive by extension
+            if safe_path.lower().endswith(".zip"):
+                # Extract ZIP contents to uploads directory
+                try:
+                    with zipfile.ZipFile(f) as zip_ref:
+                        # Extract each file ensuring directories exist
+                        for member in zip_ref.namelist():
+                            member_path = os.path.normpath(member)
+                            if member_path.startswith("..") or os.path.isabs(member_path):
+                                continue
+                            target_path = os.path.join("uploads", member_path)
+                            # Ensure parent directories exist before writing file
+                            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                            with zip_ref.open(member) as source, open(target_path, "wb") as target:
+                                target.write(source.read())
+                except Exception as e:
+                    return jsonify({"error": f"Failed to extract ZIP: {e}"}), 400
+            else:
+                path = os.path.join("uploads", safe_path)
+                # Ensure parent directories exist before saving file
+                parent_dir = os.path.dirname(path)
+                if parent_dir and not os.path.exists(parent_dir):
+                    os.makedirs(parent_dir, exist_ok=True)
+                # Save file in binary mode
+                with open(path, "wb") as out_file:
+                    out_file.write(f.read())
+                filepaths.append(path)
+
+        # After saving all files, collect all .js and .php files recursively
+        filepaths.extend(collect_files(["uploads"]))
 
         issues = run_scan(filepaths)
 

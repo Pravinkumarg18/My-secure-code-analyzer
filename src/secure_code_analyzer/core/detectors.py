@@ -203,8 +203,10 @@ def run_detectors(code, file_path):
 # ========================
 def detect_issues(file_path):
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            code = f.read()
+        # Read file in binary mode and decode as utf-8 ignoring errors to avoid decode errors on binary files
+        with open(file_path, "rb") as f:
+            raw_bytes = f.read()
+        code = raw_bytes.decode("utf-8", errors="ignore")
     except Exception as e:
         return [{
             "id": "FILE-ERROR",

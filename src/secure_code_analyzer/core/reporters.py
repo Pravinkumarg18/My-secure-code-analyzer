@@ -14,8 +14,8 @@ SEVERITY_COLOR = {
     "LOW": "#d9edf7"
 }
 
-# === Configure this to your React frontend public reports folder absolute path ===
-FRONTEND_REPORTS_DIR = r"C:\Users\ssri9\OneDrive\Desktop\secure-code-analyzer\secure-code-analyzer-frontend\public\reports"
+# === Configure this to your React frontend public reports folder ===
+FRONTEND_REPORTS_DIR = "secure-code-analyzer-frontend/public/reports"
 
 
 def save_report_to_backend_and_frontend(content: str, backend_path: str, filename: str):
