@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: secure-code-analyzer-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python src/secure_code_analyzer/cli.py --serve
+    autoDeploy: true
+    plan: free

@@ -6,3 +6,7 @@ flask-cors
 -e .
 astpretty
 javalang
+
+Flask==2.3.3
+Flask-CORS==4.0.0
+waitress==2.1.2

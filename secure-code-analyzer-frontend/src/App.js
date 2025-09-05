@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import API_BASE_URL from "./config";
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  SignIn,
+  SignUp,
+  UserButton,
+  useUser,
+  useAuth
+} from "@clerk/clerk-react";
+
+const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_test_your_publishable_key";
 
 // ... (all your React component code remains here)
 // BUT remove the Python/Flask code at the bottom
