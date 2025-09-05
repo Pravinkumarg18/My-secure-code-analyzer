@@ -302,10 +302,9 @@ useEffect(() => {
       setScanTime("From saved report");
       
       setNotification({ 
-        message: `Loaded ${deduplicatedIssues.length} unique issues from report`, 
-        type: 'success' 
-      });
-      
+  message: `Scan completed! Found ${deduplicatedIssues.length} unique issues in ${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''} ${selectedFiles.some(f => f.name.endsWith('.zip')) ? '(including ZIP contents)' : ''}`, 
+  type: 'success' 
+});
     } catch (err) {
       console.error('Error loading report:', err);
       setUploadError('No report found. Please scan files first.');
@@ -520,6 +519,67 @@ useEffect(() => {
     setIsRefreshing(false);
   }
 }, [isRefreshing]);
+const FileItem = ({ file, index, removeFile, formatFileSize }) => {
+    const [zipContents, setZipContents] = useState(null);
+    const [showZipContents, setShowZipContents] = useState(false);
+    
+    useEffect(() => {
+      if (file.name.endsWith('.zip')) {
+        getZipFileInfo(file).then(contents => setZipContents(contents));
+      }
+    }, [file]);
+
+    return (
+      <div className="file-item">
+        <span className="file-icon">
+          {file.name.endsWith('.zip') ? '📦' : '📄'}
+        </span>
+        <span className="file-name">{file.name}</span>
+        <span className="file-size">({formatFileSize(file.size)})</span>
+        
+        {file.name.endsWith('.zip') && zipContents && (
+          <button 
+            type="button"
+            className="toggle-zip-btn"
+            onClick={() => setShowZipContents(!showZipContents)}
+            title={showZipContents ? "Hide contents" : "Show contents"}
+          >
+            {showZipContents ? "▲" : "▼"}
+          </button>
+        )}
+        
+        <button 
+          type="button"
+          className="remove-file-btn"
+          onClick={() => removeFile(index)}
+          title="Remove file"
+        >
+          ×
+        </button>
+        
+        {showZipContents && zipContents && (
+          <div className="zip-contents">
+            <div className="zip-contents-header">
+              <span>Contains {zipContents.length} files:</span>
+            </div>
+            <div className="zip-files-list">
+              {zipContents.slice(0, 5).map((fileName, i) => (
+                <div key={i} className="zip-file-item">
+                  <span className="zip-file-icon">📄</span>
+                  <span className="zip-file-name">{fileName}</span>
+                </div>
+              ))}
+              {zipContents.length > 5 && (
+                <div className="zip-more-files">
+                  + {zipContents.length - 5} more files
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
 const handleFileSelect = (event) => {
   if (event && event.preventDefault) {
@@ -618,55 +678,75 @@ const handleDropZoneClick = () => {
   document.getElementById('file-upload-input').click();
 };
    const handleFileUpload = async () => {
-    if (selectedFiles.length === 0) {
-      setUploadError('Please select at least one file to scan');
-      return;
+  if (selectedFiles.length === 0) {
+    setUploadError('Please select at least one file to scan');
+    return;
+  }
+
+  setIsScanning(true);
+  setScanProgress(0);
+  setUploadError(null);
+
+  try {
+    const formData = new FormData();
+    
+    // Add each file individually with the correct field name
+    selectedFiles.forEach(file => {
+      formData.append('files', file); // Make sure it's 'files' (plural)
+    });
+
+    // Log what we're sending for debugging
+    console.log('FormData entries:');
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value.name, value.size);
     }
 
-    setIsScanning(true);
-    setScanProgress(0);
-    setUploadError(null);
+    const progressInterval = setInterval(() => {
+      setScanProgress(prev => Math.min(prev + 10, 90));
+    }, 200);
 
-    try {
-      const formData = new FormData();
-      selectedFiles.forEach(file => {
-        formData.append('files', file);
-      });
+    const response = await fetch(`${API_BASE_URL}/scan`, {
+      method: 'POST',
+      body: formData,
+      // DO NOT set Content-Type header - let browser set it with boundary
+    });
 
-      const progressInterval = setInterval(() => {
-        setScanProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
+    clearInterval(progressInterval);
+    setScanProgress(100);
 
-      const response = await fetch(`${API_BASE_URL}/scan`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      clearInterval(progressInterval);
-      setScanProgress(100);
-
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+    if (!response.ok) {
+      let errorMessage = `Server returned ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+        if (errorData.details) {
+          errorMessage += `: ${errorData.details}`;
+        }
+      } catch (e) {
+        errorMessage += ` - ${response.statusText}`;
       }
-
-      const data = await response.json();
-      const deduplicatedIssues = deduplicateIssues(data.issues || []);
-      
-      setIssues(deduplicatedIssues);
-      setScanTime(`${Date.now() % 1000}ms`);
-      
-      setNotification({ 
-        message: `Scan completed! Found ${deduplicatedIssues.length} unique issues`, 
-        type: 'success' 
-      });
-
-    } catch (err) {
-      console.error('Upload error:', err);
-      setUploadError('Scan failed: ' + err.message);
-    } finally {
-      setIsScanning(false);
+      throw new Error(errorMessage);
     }
-  };
+
+    const data = await response.json();
+    const deduplicatedIssues = deduplicateIssues(data.issues || []);
+    
+    setIssues(deduplicatedIssues);
+    setScanTime(`${Date.now() % 1000}ms`);
+    
+    setNotification({ 
+      message: `Scan completed! Found ${deduplicatedIssues.length} unique issues`, 
+      type: 'success' 
+    });
+
+  } catch (err) {
+    console.error('Upload error:', err);
+    setUploadError('Scan failed: ' + err.message);
+  } finally {
+    setIsScanning(false);
+  }
+};
+
 
   const handleDownload = async (format) => {
     try {
@@ -698,10 +778,53 @@ const handleDropZoneClick = () => {
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
+  const getZipFileInfo = async (file) => {
+  if (file.name.endsWith('.zip')) {
+    try {
+      // Dynamically import JSZip only when needed
+      const JSZip = await import('jszip');
+      const zip = new JSZip.default();
+      const arrayBuffer = await file.arrayBuffer();
+      const contents = await zip.loadAsync(arrayBuffer);
+      
+      const fileList = [];
+      contents.forEach((relativePath, zipEntry) => {
+        if (!zipEntry.dir && 
+            (relativePath.endsWith('.js') || 
+             relativePath.endsWith('.php') || 
+             relativePath.endsWith('.java') || 
+             relativePath.endsWith('.py'))) {
+          fileList.push(zipEntry.name);
+        }
+      });
+      
+      return fileList;
+    } catch (error) {
+      console.error('Error reading ZIP file:', error);
+      return ['ZIP file contents could not be read'];
+    }
+  }
+  return null;
+};
 
   const handleBarClick = (index) => {
     setActiveBar(index === activeBar ? null : index);
   };
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+const removeFile = (index) => {
+  setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+};
+
+const clearAllFiles = () => {
+  setSelectedFiles([]);
+  setUploadError(null);
+};
 
   const toggleRowExpansion = (index) => {
     setExpandedRows(prev => ({
@@ -817,75 +940,9 @@ const handleDropZoneClick = () => {
         </div>
       )}
       {/* Add this somewhere in your JSX */}
-<div style={{
-  position: 'fixed',
-  bottom: '10px',
-  right: '10px',
-  zIndex: 10000,
-  background: 'red',
-  padding: '10px',
-  borderRadius: '5px'
-}}>
-  <button 
-  type="button"
-    onClick={() => {
-      // Find ALL forms and buttons
-      const forms = document.querySelectorAll('form');
-      const buttons = document.querySelectorAll('button');
-      
-      console.log('🔍 DEBUG: Found', forms.length, 'forms and', buttons.length, 'buttons');
-      
-      forms.forEach((form, i) => {
-        console.log('Form', i, ':', form);
-        form.style.border = '3px solid red';
-      });
-      
-      buttons.forEach((btn, i) => {
-        if (!btn.hasAttribute('type') || btn.type === 'submit') {
-          console.log('Problem Button', i, ':', btn.textContent, '- Type:', btn.type);
-          btn.style.border = '3px solid orange';
-        }
-      });
-    }}
-    style={{background: 'white', color: 'red', padding: '5px', fontWeight: 'bold'}}
-  >
-    🔍 FIND REFRESH SOURCE
-  </button>
-</div>
+
       {/* Add this somewhere in your JSX for debugging */}
-<div style={{ position: 'fixed', bottom: '10px', right: '10px', zIndex: 1000 }}>
-  <button 
-  type="button"
-    onClick={() => {
-      const forms = document.querySelectorAll('form');
-      console.log('Forms found:', forms.length);
-      forms.forEach((form, i) => {
-        console.log(`Form ${i}:`, form);
-        form.style.border = '2px solid red';
-      });
-    }}
-    style={{ background: 'red', color: 'white', padding: '5px' }}
-  >
-    🔍 Find Forms
-  </button>
-  
-  <button 
-  type="button"
-    onClick={() => {
-      const buttons = document.querySelectorAll('button');
-      console.log('Buttons found:', buttons.length);
-      buttons.forEach((btn, i) => {
-        if (btn.type === 'submit') {
-          console.log(`Submit button ${i}:`, btn);
-          btn.style.border = '2px solid red';
-        }
-      });
-    }}
-    style={{ background: 'orange', color: 'white', padding: '5px', marginLeft: '5px' }}
-  >
-    🔍 Find Submit Buttons
-  </button>
-</div>
+
 
       {/* Main Content */}
       <div className="main-content">
@@ -961,25 +1018,30 @@ security-scanner scan --all --output report.html`}
 {/* Upload Card */}
 {/* Upload Card */}
 {/* Upload Card */}
+{/* Upload Card */}
 <div className="dashboard-card upload-card">
-
+  <div className="card-header">
+    <h2>Upload Files</h2>
+    {selectedFiles.length > 0 && (
+      <span className="file-count">{selectedFiles.length} files selected</span>
+    )}
+  </div>
 
   <div className="upload-section">
-    <h3>Upload Files or Folders</h3>
     <div className="upload-area">
       <div 
-  className="drag-drop-zone"
-  onClick={handleDropZoneClick}
-  onDragEnter={handleDragEnter}
-  onDragOver={handleDragOver}
-  onDragLeave={handleDragLeave}
-  onDrop={handleDrop}
->
+        className="drag-drop-zone"
+        onClick={handleDropZoneClick}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <div className="drop-content">
-  <span className="drop-icon">📁</span>
-  <p>Drag and drop files/folders here or click to select</p>
-  <p className="drop-zone-subtext">Supports .js, .php, .java, .py, and .zip files</p>
-</div>
+          <span className="drop-icon">📁</span>
+          <p>Drag and drop files/folders here or click to select</p>
+          <p className="drop-zone-subtext">Supports .js, .php, .java, .py, and .zip files</p>
+        </div>
         <input 
           type="file" 
           id="file-upload-input"
@@ -992,35 +1054,67 @@ security-scanner scan --all --output report.html`}
 
     {selectedFiles.length > 0 && (
       <div className="selected-files-section">
-        {selectedFiles.map((file, index) => (
-          <div key={index} className="file-item">
-            <span className="file-icon">📄</span>
-            <span className="file-name">{file.name}</span>
-            <div className="file-actions">
-  <button 
-    type="button"
-    className="action-btn scan-btn" 
-    onClick={handleFileUpload}
-    disabled={isScanning}
-  >
-    Scan
-  </button>
-  <button 
-    type="button"
-    className="action-btn clear-btn" 
-    onClick={() => setSelectedFiles([])}
-    disabled={isScanning || selectedFiles.length === 0}
-  >
-    Clear
-  </button>
-</div>
-          </div>
-        ))}
+        <div className="files-header">
+          <h4>Selected Files</h4>
+          <button 
+            type="button"
+            className="clear-all-btn"
+            onClick={clearAllFiles}
+          >
+            Clear All
+          </button>
+        </div>
+        
+        <div className="files-list">
+        
+{selectedFiles.map((file, index) => (
+  <FileItem 
+    key={index}
+    file={file}
+    index={index}
+    removeFile={removeFile}
+    formatFileSize={formatFileSize}
+  />
+))}
+        </div>
+        
+        {/* SINGLE SCAN BUTTON */}
+        <div className="scan-actions">
+          <button 
+            type="button"
+            className="scan-all-btn"
+            onClick={handleFileUpload}
+            disabled={isScanning || selectedFiles.length === 0}
+          >
+            {isScanning ? (
+              <>
+                <span className="scanning-spinner"></span>
+                Scanning {scanProgress}%...
+              </>
+            ) : (
+              <>
+                <span className="scan-icon">🔍</span>
+                Scan All Files
+              </>
+            )}
+          </button>
+          
+          {isScanning && (
+            <div className="progress-container">
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{width: `${scanProgress}%`}}
+                ></div>
+              </div>
+              <span className="progress-text">{scanProgress}% complete</span>
+            </div>
+          )}
+        </div>
       </div>
     )}
 
-    <div className="upload-status-section">
-      <div className="status-divider"></div>
+    {selectedFiles.length === 0 && (
       <div className="upload-status">
         <span className="status-text">Ready to scan</span>
         <button 
@@ -1028,20 +1122,17 @@ security-scanner scan --all --output report.html`}
           className="choose-file-btn"
           onClick={() => document.getElementById('file-upload-input').click()}
         >
-          Choose File
+          Choose Files
         </button>
       </div>
-    </div>
-  </div>
+    )}
 
-  {/* Filters Section - Moved inside upload card as shown in image */}
-  
-
-  {uploadError && (
-  <div className="error-message">
-    <span>⚠️</span> {uploadError}
+    {uploadError && (
+      <div className="error-message">
+        <span>⚠️</span> {uploadError}
+      </div>
+    )}
   </div>
-)}
 </div>
           {/* Results Card */}
           <div className="dashboard-card results-card">
@@ -2966,6 +3057,280 @@ body.light .filters-section.compact {
   .action-btn {
     width: 100%;
   }
+}
+  /* File items and list */
+.files-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #334155;
+}
+
+.files-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.clear-all-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.clear-all-btn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.files-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: #334155;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+}
+
+.file-item:last-child {
+  margin-bottom: 0;
+}
+
+.file-icon {
+  font-size: 1rem;
+}
+
+.file-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-size {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.remove-file-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.remove-file-btn:hover {
+  background-color: #475569;
+  color: #e2e8f0;
+}
+
+/* Scan button */
+.scan-actions {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #334155;
+}
+
+.scan-all-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+.scan-all-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+}
+
+.scan-all-btn:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.scan-icon {
+  font-size: 1.2rem;
+}
+
+/* Progress bar */
+.progress-container {
+  margin-top: 12px;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: #334155;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+  display: block;
+}
+
+/* Scanning spinner */
+.scanning-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Light theme adjustments */
+body.light .files-header {
+  border-bottom-color: #e2e8f0;
+}
+
+body.light .files-list {
+  border-color: #e2e8f0;
+}
+
+body.light .file-item {
+  background: #f1f5f9;
+}
+
+body.light .remove-file-btn:hover {
+  background-color: #e2e8f0;
+}
+
+body.light .scan-actions {
+  border-top-color: #e2e8f0;
+}
+
+body.light .progress-bar {
+  background-color: #e2e8f0;
+}
+  /* ZIP file specific styles */
+.toggle-zip-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 8px;
+}
+
+.toggle-zip-btn:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.zip-contents {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #334155;
+  border-radius: 4px;
+  border-left: 3px solid #3b82f6;
+}
+
+.zip-contents-header {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.zip-files-list {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.zip-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  font-size: 0.75rem;
+}
+
+.zip-file-icon {
+  font-size: 0.875rem;
+}
+
+.zip-file-name {
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zip-more-files {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 4px;
+}
+
+/* Light theme adjustments */
+body.light .zip-contents {
+  background-color: #f1f5f9;
+  border-left-color: #3b82f6;
+}
+
+body.light .zip-file-name {
+  color: #1e293b;
 }
       `}</style>
     </div>

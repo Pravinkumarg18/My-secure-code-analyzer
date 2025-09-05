@@ -3,6 +3,9 @@ import os
 import sys
 import zipfile
 import shutil
+import tempfile
+import uuid
+import re
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -95,67 +98,167 @@ def serve_mode():
     app = Flask(__name__)
     CORS(app)
 
+
+    
     @app.route("/scan", methods=["POST"])
     def scan_endpoint():
         """
         Upload and scan files via API.
         Expects files in multipart form-data.
         """
-        if "files" not in request.files:
-            return jsonify({"error": "No files uploaded"}), 400
+        try:
+            print("=== SCAN REQUEST RECEIVED ===")
+            
+            if "files" not in request.files:
+                return jsonify({"error": "No files uploaded"}), 400
 
-        uploaded_files = request.files.getlist("files")
-        filepaths = []
+            uploaded_files = request.files.getlist("files")
+            if not uploaded_files or all(f.filename == '' for f in uploaded_files):
+                return jsonify({"error": "No valid files uploaded"}), 400
 
-        # Clear uploads directory before saving new files
-        if os.path.exists("uploads"):
-            shutil.rmtree("uploads")
-        os.makedirs("uploads", exist_ok=True)
+            filepaths = []
+            file_mapping = {}  # Map temporary names to original names
+            
+            # Create uploads directory if it doesn't exist
+            os.makedirs("uploads", exist_ok=True)
+                
+            for f in uploaded_files:
+                if f.filename == '':
+                    continue
+                    
+                original_filename = f.filename
+                print(f"Processing file: {original_filename}")
+                
+                # Normalize path to prevent directory traversal attacks
+                safe_path = os.path.normpath(original_filename)
+                if safe_path.startswith("..") or os.path.isabs(safe_path):
+                    print(f"Rejected unsafe filename: {original_filename}")
+                    continue
 
-        for f in uploaded_files:
-            filename = f.filename
-            # Normalize path to prevent directory traversal attacks
-            safe_path = os.path.normpath(filename)
-            if safe_path.startswith("..") or os.path.isabs(safe_path):
-                continue  # Reject unsafe filenames
+                if safe_path.lower().endswith(".zip"):
+                    # Extract ZIP safely while preserving original structure
+                    try:
+                        print(f"Extracting ZIP: {original_filename}")
+                        with zipfile.ZipFile(f) as zip_ref:
+                            zip_files = zip_ref.namelist()
+                            print(f"ZIP contains {len(zip_files)} files")
+                            
+                            for member in zip_files:
+                                member_path = os.path.normpath(member)
+                                if member_path.startswith("..") or os.path.isabs(member_path):
+                                    print(f"Skipping unsafe path in ZIP: {member}")
+                                    continue
+                                    
+                                # Skip directories
+                                if member.endswith('/'):
+                                    continue
+                                    
+                                # Only process supported file types
+                                if any(member_path.endswith(ext) for ext in SUPPORTED_EXTENSIONS):
+                                    # Create a unique directory for this ZIP's contents
+                                    zip_base_name = os.path.splitext(original_filename)[0]
+                                    safe_zip_dir = re.sub(r'[^a-zA-Z0-9_]', '_', zip_base_name)
+                                    target_dir = os.path.join("uploads", f"zip_{safe_zip_dir}_{uuid.uuid4().hex[:8]}")
+                                    os.makedirs(target_dir, exist_ok=True)
+                                    
+                                    # Preserve original path structure within the ZIP
+                                    target_path = os.path.join(target_dir, member_path)
+                                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                                    
+                                    # Extract file
+                                    with zip_ref.open(member) as source, open(target_path, "wb") as target:
+                                        target.write(source.read())
+                                    
+                                    # Store mapping with original ZIP name + internal path
+                                    original_name_in_zip = f"{original_filename}/{member_path}"
+                                    file_mapping[target_path] = original_name_in_zip
+                                    filepaths.append(target_path)
+                                    print(f"Extracted: {member_path}")
+                    except Exception as e:
+                        print(f"ZIP extraction failed: {e}")
+                        return jsonify({"error": f"Failed to extract ZIP: {e}"}), 400
+                else:
+                    # Check if it's a supported file type
+                    if not any(safe_path.lower().endswith(ext) for ext in SUPPORTED_EXTENSIONS):
+                        print(f"Skipping unsupported file type: {original_filename}")
+                        continue
+                    
+                    # Create a safe filename that preserves the original name
+                    base_name = os.path.splitext(original_filename)[0]
+                    file_ext = os.path.splitext(original_filename)[1]
+                    
+                    # Make filename safe for Windows
+                    safe_base_name = re.sub(r'[^a-zA-Z0-9_]', '_', base_name)
+                    unique_filename = f"{safe_base_name}_{uuid.uuid4().hex[:8]}{file_ext}"
+                    path = os.path.join("uploads", unique_filename)
+                    
+                    f.save(path)
+                    file_mapping[path] = original_filename  # Store original name mapping
+                    filepaths.append(path)
+                    print(f"Saved: {original_filename} -> {unique_filename}")
 
-            if safe_path.lower().endswith(".zip"):
-                # Extract ZIP safely
+            print(f"Total files to scan: {len(filepaths)}")
+            if not filepaths:
+                return jsonify({"error": "No supported files found in upload"}), 400
+
+            # Scan files but preserve original names in results
+            issues = []
+            for filepath in filepaths:
                 try:
-                    with zipfile.ZipFile(f) as zip_ref:
-                        for member in zip_ref.namelist():
-                            member_path = os.path.normpath(member)
-                            if member_path.startswith("..") or os.path.isabs(member_path):
-                                continue
-                            target_path = os.path.join("uploads", member_path)
-                            os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                            with zip_ref.open(member) as source, open(target_path, "wb") as target:
-                                target.write(source.read())
+                    file_issues = scan_file(filepath)
+                    # Replace temporary filenames with original names in the results
+                    for issue in file_issues:
+                        original_name = file_mapping.get(filepath, os.path.basename(filepath))
+                        issue['file'] = original_name
+                    issues.extend(file_issues)
                 except Exception as e:
-                    return jsonify({"error": f"Failed to extract ZIP: {e}"}), 400
-            else:
-                # Save normal file
-                path = os.path.join("uploads", safe_path)
-                parent_dir = os.path.dirname(path)
-                if parent_dir and not os.path.exists(parent_dir):
-                    os.makedirs(parent_dir, exist_ok=True)
-                with open(path, "wb") as out_file:
-                    out_file.write(f.read())
-                filepaths.append(path)
+                    print(f"Error scanning {filepath}: {e}")
+                    original_name = file_mapping.get(filepath, os.path.basename(filepath))
+                    issues.append({
+                        "severity": "LOW",
+                        "file": original_name,
+                        "line": 0,
+                        "message": f"Error scanning file: {e}",
+                        "category": "SCAN_ERROR"
+                    })
 
-        # Collect all supported files recursively from uploads
-        filepaths.extend(collect_files(["uploads"]))
+            print(f"Found {len(issues)} issues")
 
-        issues = run_scan(filepaths)
+            # Save reports
+            os.makedirs(REPORTS_DIR, exist_ok=True)
+            json_path = os.path.join(REPORTS_DIR, "report.json")
+            html_path = os.path.join(REPORTS_DIR, "report.html")
+            generate_json_report(issues, json_path)
+            generate_html_report(issues, html_path)
 
-        # Save reports
-        os.makedirs(REPORTS_DIR, exist_ok=True)
-        json_path = os.path.join(REPORTS_DIR, "report.json")
-        html_path = os.path.join(REPORTS_DIR, "report.html")
-        generate_json_report(issues, json_path)
-        generate_html_report(issues, html_path)
+            # Clean up uploaded files after processing
+            for filepath in filepaths:
+                try:
+                    # Remove the file
+                    os.remove(filepath)
+                    # Try to remove empty directories
+                    directory = os.path.dirname(filepath)
+                    if directory and directory != "uploads" and os.path.exists(directory):
+                        try:
+                            os.rmdir(directory)
+                        except OSError:
+                            pass  # Directory not empty, that's fine
+                    print(f"Cleaned up: {filepath}")
+                except Exception as e:
+                    print(f"Warning: Could not clean up file {filepath}: {e}")
 
-        return jsonify({"issues": issues, "count": len(issues)})
+            return jsonify({
+                "issues": issues, 
+                "count": len(issues),
+                "files_processed": len(filepaths)
+            })
+
+        except Exception as e:
+            print(f"Unexpected error in scan endpoint: {e}")
+            return jsonify({"error": "Internal server error", "details": str(e)}), 500
+
+
+    
 
     @app.route("/reports/<path:filename>", methods=["GET"])
     def serve_reports(filename):
@@ -204,7 +307,7 @@ def main():
         serve_mode()
     else:
         cli_mode(args)
-
+        
 
 if __name__ == "__main__":
     main()

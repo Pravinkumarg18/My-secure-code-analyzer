@@ -13,9 +13,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@clerk/clerk-react": "^5.46.1",
+    "@clerk/nextjs": "^6.31.9",
     "esprima": "^4.0.1",
     "jspdf": "^3.0.2",
     "jspdf-autotable": "^5.0.2",
+    "mongodb": "^6.19.0",
+    "mongoose": "^8.18.0",
     "php-parser": "^3.2.5",
     "react-icons": "^5.5.0"
   }
