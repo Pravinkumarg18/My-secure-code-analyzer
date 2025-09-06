@@ -96,8 +96,32 @@ def cli_mode(args):
 def serve_mode():
     """Run Flask server for frontend integration."""
     app = Flask(__name__)
-    CORS(app)
 
+    # --- REPLACE THE CORS(app) LINE WITH THIS BLOCK ---
+    from flask_cors import cross_origin
+
+    # This allows your specific Vercel frontend to access the backend
+    # Add more origins to the list if needed (e.g., for development)
+    allowed_origins = [
+        "https://final-commit-1.vercel.app",
+        "http://localhost:3000"  # Keep this for local development
+    ]
+
+    @app.after_request
+    def after_request(response):
+        # Check if the request's origin is in the allowed list
+        origin = request.headers.get('Origin')
+        if origin in allowed_origins:
+            response.headers.add('Access-Control-Allow-Origin', origin)
+        # You can also use the permissive line below instead of the above logic,
+        # but it's less secure.
+        # response.headers.add('Access-Control-Allow-Origin', '*')
+
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
+    # --- END OF CORS CONFIGURATION BLOCK ---
 
     
     @app.route("/scan", methods=["POST"])
