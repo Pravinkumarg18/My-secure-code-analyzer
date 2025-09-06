@@ -21,7 +21,6 @@ const SEVERITY_COLORS = {
   HIGH: { chip: "high", row: "severity-high", chart: "#f59e0b" },
   MEDIUM: { chip: "medium", row: "severity-medium", chart: "#06b6d4" },
   LOW: { chip: "low", row: "severity-low", chart: "#10b981" },
-  INFO: { chip: "info", row: "severity-info", chart: "#94a3b8" },
 };
 
 const FILE_EXTENSIONS = {
@@ -467,8 +466,7 @@ useEffect(() => {
       CRITICAL: 0,
       HIGH: 0,
       MEDIUM: 0,
-      LOW: 0,
-      INFO: 0,
+      LOW: 0
     };
 
     filteredIssues.forEach(issue => {
