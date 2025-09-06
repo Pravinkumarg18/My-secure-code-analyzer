@@ -107,12 +107,11 @@ def serve_mode():
     if request.method == "OPTIONS":
             # Handle preflight request
             return jsonify({"status": "preflight"}), 200
-    @app.route("/scan", methods=["POST"])
+    @app.route("/scan", methods=["POST", "OPTIONS"])  # Add OPTIONS to methods
     def scan_endpoint():
-        """
-        Upload and scan files via API.
-        Expects files in multipart form-data.
-        """
+        if request.method == "OPTIONS":
+            # Handle preflight request
+            return jsonify({"status": "preflight"}), 200
         try:
             print("=== SCAN REQUEST RECEIVED ===")
             
