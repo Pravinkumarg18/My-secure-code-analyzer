@@ -7,7 +7,7 @@ import tempfile
 import uuid
 import re
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory  # ADDED request here
 from flask_cors import CORS
 from secure_code_analyzer.core.scanner import scan_file
 from secure_code_analyzer.core.reporters import (
@@ -97,14 +97,13 @@ def serve_mode():
     """Run Flask server for frontend integration."""
     app = Flask(__name__)
 
-    # --- SIMPLE CORS CONFIGURATION ---
-    # This is the correct way to use flask-cors
+    # --- CORRECT CORS CONFIGURATION ---
     CORS(app, origins=[
         "https://final-commit-1.vercel.app",
         "http://localhost:3000"
     ], supports_credentials=True)
     
-    @app.route("/scan", methods=["POST", "OPTIONS"])  # Add OPTIONS to methods
+    @app.route("/scan", methods=["POST", "OPTIONS"])
     def scan_endpoint():
         """
         Upload and scan files via API.
@@ -265,17 +264,18 @@ def serve_mode():
             print(f"Unexpected error in scan endpoint: {e}")
             return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
-
-    
-
     @app.route("/reports/<path:filename>", methods=["GET"])
     def serve_reports(filename):
         """Serve saved reports to frontend."""
         return send_from_directory(REPORTS_DIR, filename)
 
-    @app.route("/refresh", methods=["POST"])
+    @app.route("/refresh", methods=["POST", "OPTIONS"])  # Add OPTIONS here too
     def refresh_scan():
         """Re-run scan on last uploaded files."""
+        # Handle preflight OPTIONS request
+        if request.method == "OPTIONS":
+            return jsonify({"status": "preflight"}), 200
+            
         upload_dir = "uploads"
         if not os.path.exists(upload_dir):
             return jsonify({"error": "No uploaded files to rescan"}), 400
