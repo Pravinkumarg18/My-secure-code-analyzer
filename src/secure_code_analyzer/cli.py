@@ -98,21 +98,23 @@ def serve_mode():
     app = Flask(__name__)
 
     # --- SIMPLE CORS CONFIGURATION ---
+    # This is the correct way to use flask-cors
     CORS(app, origins=[
         "https://final-commit-1.vercel.app",
         "http://localhost:3000"
     ], supports_credentials=True)
-    # --- END OF CORS CONFIGURATION ---
-
-    if request.method == "OPTIONS":
-            # Handle preflight request
-            return jsonify({"status": "preflight"}), 200
+    
     @app.route("/scan", methods=["POST", "OPTIONS"])  # Add OPTIONS to methods
     def scan_endpoint():
-        if request.method == "OPTIONS":
-            # Handle preflight request
-            return jsonify({"status": "preflight"}), 200
+        """
+        Upload and scan files via API.
+        Expects files in multipart form-data.
+        """
         try:
+            # Handle preflight OPTIONS request
+            if request.method == "OPTIONS":
+                return jsonify({"status": "preflight"}), 200
+                
             print("=== SCAN REQUEST RECEIVED ===")
             
             if "files" not in request.files:
