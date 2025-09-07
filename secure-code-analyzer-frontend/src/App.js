@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import API_BASE_URL from "./config";
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  SignIn,
+  SignUp,
+  UserButton,
+  useUser,
+  useAuth
+} from "@clerk/clerk-react";
+
+const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_test_your_publishable_key";
 
 // ... (all your React component code remains here)
 // BUT remove the Python/Flask code at the bottom
@@ -9,7 +21,6 @@ const SEVERITY_COLORS = {
   HIGH: { chip: "high", row: "severity-high", chart: "#f59e0b" },
   MEDIUM: { chip: "medium", row: "severity-medium", chart: "#06b6d4" },
   LOW: { chip: "low", row: "severity-low", chart: "#10b981" },
-  INFO: { chip: "info", row: "severity-info", chart: "#94a3b8" },
 };
 
 const FILE_EXTENSIONS = {
@@ -335,24 +346,48 @@ useEffect(() => {
 //     setIsRefreshing(false);
 //   }
 // }, [isRefreshing]);
- const generateVulnerabilityId = (issue) => {
-    return `${issue.file}-${issue.line}-${issue.id}-${issue.message}`.replace(/\s+/g, '-');
-  };
+const generateVulnerabilityId = (issue) => {
+  // Use category + file for deduplication (same vulnerability in same file)
+  return `${issue.category}-${issue.file}`.replace(/\s+/g, '-');
+};
 
-   const deduplicateIssues = (issuesArray) => {
-    const uniqueIssues = {};
-    const result = [];
-    
-    issuesArray.forEach(issue => {
-      const id = generateVulnerabilityId(issue);
-      if (!uniqueIssues[id]) {
-        uniqueIssues[id] = true;
-        result.push({...issue, uniqueId: id});
+const deduplicateIssues = (issuesArray) => {
+  const bundledIssues = {};
+  const result = [];
+  
+  // First pass: group issues by category and file
+  issuesArray.forEach(issue => {
+    const id = generateVulnerabilityId(issue);
+    if (!bundledIssues[id]) {
+      bundledIssues[id] = {
+        ...issue,
+        uniqueId: id,
+        bundledLines: [issue.line],
+        originalCount: 1
+      };
+    } else {
+      // Add line to bundled lines if it's not already there
+      if (!bundledIssues[id].bundledLines.includes(issue.line)) {
+        bundledIssues[id].bundledLines.push(issue.line);
       }
-    });
-    
-    return result;
-  };
+      bundledIssues[id].originalCount += 1;
+    }
+  });
+  
+  // Convert to array and format the display
+  Object.values(bundledIssues).forEach(bundledIssue => {
+    const formattedIssue = {
+      ...bundledIssue,
+      line: bundledIssue.bundledLines.join(', '), // Show bundled lines in the table
+      message: bundledIssue.originalCount > 1 
+        ? `${bundledIssue.message} (${bundledIssue.originalCount} occurrences)`
+        : bundledIssue.message
+    };
+    result.push(formattedIssue);
+  });
+  
+  return result;
+};
 
   const clearFilters = () => {
     setFilters({
@@ -455,8 +490,7 @@ useEffect(() => {
       CRITICAL: 0,
       HIGH: 0,
       MEDIUM: 0,
-      LOW: 0,
-      INFO: 0,
+      LOW: 0
     };
 
     filteredIssues.forEach(issue => {
@@ -1435,54 +1469,62 @@ security-scanner scan --all --output report.html`}
                 <th>DETECTED BY</th>
               </tr>
             </thead>
-            <tbody>
-               {filteredIssues.map((issue, index) => (
+           <tbody>
+  {filteredIssues.map((issue, index) => (
     <React.Fragment key={issue.uniqueId || index}>
-                  <tr className={SEVERITY_COLORS[issue.severity]?.row || ""}>
-                    <td>
-                      <button
-                      type="button"
-                        className="expand-btn"
-                        onClick={() => toggleRowExpansion(index)}
-                      >
-                        {expandedRows[index] ? "▼" : "►"}
-                      </button>
-                    </td>
-                    <td><SeverityChip severity={issue.severity} /></td>
-                    <td>{issue.file}</td>
-                    <td>{issue.line}</td>
-                    <td>{issue.category}</td>
-                    <td>{issue.id}</td>
-                    <td>{issue.message}</td>
-                    <td>{issue.detected_by}</td>
-                  </tr>
-                  {expandedRows[index] && (
-                    <tr className={`detail-row ${SEVERITY_COLORS[issue.severity]?.row || ""}`}>
-                      <td colSpan="8">
-                        <div className="issue-details">
-                          <div className="detail-section">
-                            <h4>Code Snippet:</h4>
-                            <code>{issue.snippet}</code>
-                          </div>
-                          <div className="detail-section">
-                            <h4>Suggestion:</h4>
-                            <p>{issue.suggestion}</p>
-                          </div>
-                          <div className="detail-section">
-                            <h4>OWASP:</h4>
-                            <span className="security-tag">{issue.owasp}</span>
-                          </div>
-                          <div className="detail-section">
-                            <h4>CWE:</h4>
-                            <span className="security-tag">{issue.cwe}</span>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
+      <tr className={SEVERITY_COLORS[issue.severity]?.row || ""}>
+        <td>
+          <button
+            type="button"
+            className="expand-btn"
+            onClick={() => toggleRowExpansion(index)}
+          >
+            {expandedRows[index] ? "▼" : "►"}
+          </button>
+        </td>
+        <td><SeverityChip severity={issue.severity} /></td>
+        <td>{issue.file}</td>
+        <td>{issue.line}</td> {/* This now shows bundled lines like "12, 15, 27" */}
+        <td>{issue.category}</td>
+        <td>{issue.id}</td>
+        <td>{issue.message}</td> {/* This shows count of occurrences */}
+        <td>{issue.detected_by}</td>
+      </tr>
+      {expandedRows[index] && (
+        <tr className={`detail-row ${SEVERITY_COLORS[issue.severity]?.row || ""}`}>
+          <td colSpan="8">
+            <div className="issue-details">
+              <div className="detail-section">
+                <h4>Affected Lines:</h4>
+                <p>Lines {issue.bundledLines.join(', ')}</p>
+              </div>
+              <div className="detail-section">
+                <h4>Total Occurrences:</h4>
+                <p>{issue.originalCount} occurrence{issue.originalCount !== 1 ? 's' : ''}</p>
+              </div>
+              <div className="detail-section">
+                <h4>Code Snippet:</h4>
+                <code>{issue.snippet}</code>
+              </div>
+              <div className="detail-section">
+                <h4>Suggestion:</h4>
+                <p>{issue.suggestion}</p>
+              </div>
+              <div className="detail-section">
+                <h4>OWASP:</h4>
+                <span className="security-tag">{issue.owasp}</span>
+              </div>
+              <div className="detail-section">
+                <h4>CWE:</h4>
+                <span className="security-tag">{issue.cwe}</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </React.Fragment>
+  ))}
+</tbody>
           </table>
         </div>
 
@@ -1544,6 +1586,21 @@ security-scanner scan --all --output report.html`}
           background-color: #f8fafc;
           color: #1e293b;
         }
+          .detail-section h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #94a3b8;
+}
+
+.detail-section p {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
 
         .container {
           display: flex;
