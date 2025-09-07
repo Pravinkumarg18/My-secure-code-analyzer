@@ -55,22 +55,31 @@ def dedup_text(text):
 
 
 def generate_html_report(issues, out_path):
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 
-    # --- Deduplicate issues ---
-    unique_keys = set()
-    deduped_issues = []
+    # --- Deduplicate issues by file + category + severity + message + suggestion ---
+    occurrences = {}
     for i in issues:
         key = (
             i.get("file", ""),
-            i.get("line", 0),
+            i.get("category", "").lower(),
             i.get("severity", "").upper(),
             dedup_text(i.get("message", "")),
-            dedup_text(i.get("suggestion", "")),
+            dedup_text(i.get("suggestion", ""))
         )
-        if key not in unique_keys:
-            unique_keys.add(key)
-            deduped_issues.append(i)
+        if key not in occurrences:
+            issue_copy = i.copy()
+            issue_copy["lines"] = [i.get("line", 0)]
+            occurrences[key] = {"issue": issue_copy, "count": 1}
+        else:
+            occurrences[key]["count"] += 1
+            occurrences[key]["issue"]["lines"].append(i.get("line", 0))
+
+    deduped_issues = []
+    for v in occurrences.values():
+        issue = v["issue"]
+        issue["occurrences"] = v["count"]
+        deduped_issues.append(issue)
 
     # --- OWASP normalization & dedup ---
     owasp_tags = set()
@@ -136,7 +145,14 @@ def generate_html_report(issues, out_path):
     for i in deduped_issues:
         sev = escape(i.get("severity", ""))
         file = escape(i.get("file", ""))
-        line = i.get("line", 0)
+        lines = i.get("lines", [i.get("line", 0)])
+        first_line = lines[0]
+        if len(lines) > 1:
+            tooltip = ", ".join(str(l) for l in lines)
+            line_text = f'<span title="Also at lines: {tooltip}">{first_line}</span>'
+        else:
+            line_text = str(first_line)
+
         category = escape(i.get("category", ""))
         message = escape(dedup_text(i.get("message", "")))
         suggestion = escape(dedup_text(i.get("suggestion", "")))
@@ -145,6 +161,7 @@ def generate_html_report(issues, out_path):
         rule_id = escape(i.get("id") or i.get("rule", "-"))
         owasp = escape(i.get("owasp", ""))
         cwe = escape(i.get("cwe", ""))
+        occurrences_count = i.get("occurrences", 1)
 
         extra_tags = []
         if owasp:
@@ -160,12 +177,14 @@ def generate_html_report(issues, out_path):
         if extra_tags:
             rule_cell += "<br>" + " ".join(extra_tags)
 
+        occ_text = f" (x{occurrences_count})" if occurrences_count > 1 else ""
+
         rows.append(f"""
           <tr class="{_sev_class(sev)}">
             <td>{file}</td>
-            <td style="text-align:right">{line}</td>
+            <td style="text-align:right">{line_text}</td>
             <td><span class="sev sev-{sev.lower()}">{sev}</span></td>
-            <td>{category}</td>
+            <td>{category}{occ_text}</td>
             <td class="rule-cell">{rule_cell}</td>
             <td>{message}</td>
             <td><code>{snippet}</code></td>

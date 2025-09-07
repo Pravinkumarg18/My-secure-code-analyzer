@@ -1,18 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import API_BASE_URL from "./config";
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  SignIn,
-  SignUp,
-  UserButton,
-  useUser,
-  useAuth
-} from "@clerk/clerk-react";
-
-const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_test_your_publishable_key";
 
 // ... (all your React component code remains here)
 // BUT remove the Python/Flask code at the bottom
@@ -21,6 +9,7 @@ const SEVERITY_COLORS = {
   HIGH: { chip: "high", row: "severity-high", chart: "#f59e0b" },
   MEDIUM: { chip: "medium", row: "severity-medium", chart: "#06b6d4" },
   LOW: { chip: "low", row: "severity-low", chart: "#10b981" },
+  INFO: { chip: "info", row: "severity-info", chart: "#94a3b8" },
 };
 
 const FILE_EXTENSIONS = {
@@ -466,7 +455,8 @@ useEffect(() => {
       CRITICAL: 0,
       HIGH: 0,
       MEDIUM: 0,
-      LOW: 0
+      LOW: 0,
+      INFO: 0,
     };
 
     filteredIssues.forEach(issue => {
