@@ -407,47 +407,75 @@ const deduplicateIssues = (issuesArray) => {
   };
 
   const filteredIssues = useMemo(() => {
-    return issues.filter(issue => {
-      if (filters.severity !== "ALL" && issue.severity !== filters.severity) {
+  const filtered = issues.filter(issue => {
+    if (filters.severity !== "ALL" && issue.severity !== filters.severity) {
+      return false;
+    }
+
+    if (filters.owasp !== "ALL" && !issue.owasp.includes(filters.owasp)) {
+      return false;
+    }
+
+    if (filters.cwe !== "ALL" && !issue.cwe.includes(filters.cwe)) {
+      return false;
+    }
+
+    if (filters.fileType !== "ALL") {
+      const fileExt = issue.file.substring(issue.file.lastIndexOf('.'));
+      if (!FILE_EXTENSIONS[filters.fileType]?.includes(fileExt)) {
         return false;
       }
+    }
 
-      if (filters.owasp !== "ALL" && !issue.owasp.includes(filters.owasp)) {
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      const searchableFields = [
+        issue.file,
+        issue.message,
+        issue.category,
+        issue.id,
+        issue.detected_by,
+        issue.owasp,
+        issue.cwe,
+        issue.suggestion
+      ].join(" ").toLowerCase();
+
+      if (!searchableFields.includes(searchTerm)) {
         return false;
       }
+    }
 
-      if (filters.cwe !== "ALL" && !issue.cwe.includes(filters.cwe)) {
-        return false;
-      }
+    return true;
+  });
 
-      if (filters.fileType !== "ALL") {
-        const fileExt = issue.file.substring(issue.file.lastIndexOf('.'));
-        if (!FILE_EXTENSIONS[filters.fileType]?.includes(fileExt)) {
-          return false;
-        }
-      }
+  // Sort by severity (CRITICAL, HIGH, MEDIUM, LOW) and then by line numbers
+  const severityOrder = {
+    CRITICAL: 1,
+    HIGH: 2,
+    MEDIUM: 3,
+    LOW: 4
+  };
 
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        const searchableFields = [
-          issue.file,
-          issue.message,
-          issue.category,
-          issue.id,
-          issue.detected_by,
-          issue.owasp,
-          issue.cwe,
-          issue.suggestion
-        ].join(" ").toLowerCase();
-
-        if (!searchableFields.includes(searchTerm)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [issues, filters]);
+  return filtered.sort((a, b) => {
+    const severityA = a.severity.toUpperCase();
+    const severityB = b.severity.toUpperCase();
+    
+    // First sort by severity
+    if (severityOrder[severityA] !== severityOrder[severityB]) {
+      return severityOrder[severityA] - severityOrder[severityB];
+    }
+    
+    // If same severity, sort by line numbers (handle bundled lines)
+    const linesA = a.bundledLines || [a.line];
+    const linesB = b.bundledLines || [b.line];
+    
+    // Get the minimum line number for each issue (for sorting)
+    const minLineA = Math.min(...linesA.map(line => parseInt(line) || 0));
+    const minLineB = Math.min(...linesB.map(line => parseInt(line) || 0));
+    
+    return minLineA - minLineB;
+  });
+}, [issues, filters]);
 
   const owaspCounts = useMemo(() => {
     const counts = {};
