@@ -1,3 +1,5 @@
+// Add at the top with other imports
+import JSZip from 'jszip';
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import API_BASE_URL from "./config";
@@ -112,59 +114,63 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   // ... your state declarations ...
  const filterOptions = useMemo(() => {
-    const options = {
-      severities: new Set(["ALL"]),
-      owaspCategories: new Set(["ALL"]),
-      cweCategories: new Set(["ALL"]),
-      fileTypes: new Set(["ALL"]),
-    };
+  const options = {
+    severities: new Set(["ALL"]),
+    owaspCategories: new Set(["ALL"]),
+    cweCategories: new Set(["ALL"]),
+    fileTypes: new Set(["ALL"]),
+  };
 
-    issues.forEach(issue => {
-      // Add severity
+  issues.forEach(issue => {
+    // Add severity (with safety check)
+    if (issue.severity) {
       options.severities.add(issue.severity.toUpperCase());
-      
-      // Add OWASP categories
-      if (issue.owasp) {
-        const owaspMatch = issue.owasp.match(/A\d+/);
-        if (owaspMatch && owaspMatch[0]) {
-          options.owaspCategories.add(owaspMatch[0]);
-        }
+    }
+    
+    // Add OWASP categories (with safety check)
+    if (issue.owasp) {
+      const owaspMatch = issue.owasp.match(/A\d+/);
+      if (owaspMatch && owaspMatch[0]) {
+        options.owaspCategories.add(owaspMatch[0]);
       }
-      
-      // Add CWE categories
-      if (issue.cwe) {
-        const cweMatch = issue.cwe.match(/CWE-\d+/);
-        if (cweMatch && cweMatch[0]) {
-          options.cweCategories.add(cweMatch[0]);
-        }
+    }
+    
+    // Add CWE categories (with safety check)
+    if (issue.cwe) {
+      const cweMatch = issue.cwe.match(/CWE-\d+/);
+      if (cweMatch && cweMatch[0]) {
+        options.cweCategories.add(cweMatch[0]);
       }
-      
-      // Add file types
-      if (issue.file) {
-        const fileExt = issue.file.substring(issue.file.lastIndexOf('.'));
-        const fileType = Object.entries(FILE_EXTENSIONS).find(([_, exts]) => 
-          exts.includes(fileExt)
-        );
-        if (fileType) {
-          options.fileTypes.add(fileType[0]);
-        }
+    }
+    
+    // Add file types (with safety check)
+    if (issue.file) {
+      const fileExt = issue.file.substring(issue.file.lastIndexOf('.'));
+      const fileType = Object.entries(FILE_EXTENSIONS).find(([_, exts]) => 
+        exts.includes(fileExt)
+      );
+      if (fileType) {
+        options.fileTypes.add(fileType[0]);
       }
-    });
+    }
+  });
 
-    // Convert Sets to Arrays for easier mapping
-    return {
-      severities: Array.from(options.severities),
-      owaspCategories: Array.from(options.owaspCategories),
-      cweCategories: Array.from(options.cweCategories),
-      fileTypes: Array.from(options.fileTypes),
-    };
-  }, [issues]);
+  // Convert Sets to Arrays for easier mapping
+  return {
+    severities: Array.from(options.severities),
+    owaspCategories: Array.from(options.owaspCategories),
+    cweCategories: Array.from(options.cweCategories),
+    fileTypes: Array.from(options.fileTypes),
+  };
+}, [issues]);
 
   // Function to get OWASP category name from ID
-  const getOwaspName = (id) => {
-    const vuln = OWASP_VULNERABILITIES.find(v => v.id === id);
-    return vuln ? vuln.name : id;
-  };
+  // Function to get OWASP category name from ID
+const getOwaspName = (id) => {
+  if (!id || id === "ALL") return id;
+  const vuln = OWASP_VULNERABILITIES.find(v => v.id === id);
+  return vuln ? vuln.name : id;
+};
 
   // NUCLEAR OPTION: Prevent ALL page refreshes
   useEffect(() => {
@@ -376,20 +382,27 @@ const deduplicateIssues = (issuesArray) => {
   };
 const filteredIssues = useMemo(() => {
   const filtered = issues.filter(issue => {
-    if (filters.severity !== "ALL" && issue.severity !== filters.severity) {
+    // Add safety checks for all properties
+    const severity = issue.severity || '';
+    const owasp = issue.owasp || '';
+    const cwe = issue.cwe || '';
+    const file = issue.file || '';
+    const category = issue.category || '';
+    
+    if (filters.severity !== "ALL" && severity !== filters.severity) {
       return false;
     }
 
-    if (filters.owasp !== "ALL" && !(issue.owasp || '').includes(filters.owasp)) {
+    if (filters.owasp !== "ALL" && !owasp.includes(filters.owasp)) {
       return false;
     }
 
-    if (filters.cwe !== "ALL" && !(issue.cwe || '').includes(filters.cwe)) {
+    if (filters.cwe !== "ALL" && !cwe.includes(filters.cwe)) {
       return false;
     }
 
     if (filters.fileType !== "ALL") {
-      const fileExt = (issue.file || '').substring((issue.file || '').lastIndexOf('.'));
+      const fileExt = file.substring(file.lastIndexOf('.'));
       if (!FILE_EXTENSIONS[filters.fileType]?.includes(fileExt)) {
         return false;
       }
@@ -398,15 +411,14 @@ const filteredIssues = useMemo(() => {
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
       
-      // SAFE VERSION: Handle undefined properties
       const searchableFields = [
-        issue.file || '',
+        file,
         issue.message || '',
-        issue.category || '',
+        category,
         issue.id || '',
         issue.detected_by || '',
-        issue.owasp || '',
-        issue.cwe || '',
+        owasp,
+        cwe,
         issue.suggestion || ''
       ].join(" ").toLowerCase();
 
@@ -418,7 +430,7 @@ const filteredIssues = useMemo(() => {
     return true;
   });
 
-  // Sort by severity (CRITICAL, HIGH, MEDIUM, LOW) and then by line numbers
+  // Rest of your sorting logic...
   const severityOrder = {
     CRITICAL: 1,
     HIGH: 2,
@@ -447,14 +459,17 @@ const filteredIssues = useMemo(() => {
   });
 }, [issues, filters]);
 
-  const owaspCounts = useMemo(() => {
-    const counts = {};
+ const owaspCounts = useMemo(() => {
+  const counts = {};
 
-    OWASP_VULNERABILITIES.forEach(vuln => {
-      counts[vuln.id] = 0;
-    });
+  // Initialize all OWASP categories with 0
+  OWASP_VULNERABILITIES.forEach(vuln => {
+    counts[vuln.id] = 0;
+  });
 
-    filteredIssues.forEach(issue => {
+  filteredIssues.forEach(issue => {
+    // Add safety check for issue.owasp
+    if (issue.owasp) {
       const owaspMatch = issue.owasp.match(/A\d+/);
       if (owaspMatch && owaspMatch[0]) {
         const owaspId = owaspMatch[0];
@@ -462,10 +477,11 @@ const filteredIssues = useMemo(() => {
           counts[owaspId]++;
         }
       }
-    });
+    }
+  });
 
-    return counts;
-  }, [filteredIssues]);
+  return counts;
+}, [filteredIssues]);
 
   const owaspChartData = useMemo(() => {
     return OWASP_VULNERABILITIES.map(vuln => {
@@ -484,22 +500,25 @@ const filteredIssues = useMemo(() => {
   }, [owaspCounts, filteredIssues.length]);
 
   const severityCounts = useMemo(() => {
-    const counts = {
-      CRITICAL: 0,
-      HIGH: 0,
-      MEDIUM: 0,
-      LOW: 0,
-    };
+  const counts = {
+    CRITICAL: 0,
+    HIGH: 0,
+    MEDIUM: 0,
+    LOW: 0,
+  };
 
-    filteredIssues.forEach(issue => {
+  filteredIssues.forEach(issue => {
+    // Add safety check for issue.severity
+    if (issue.severity) {
       const severity = issue.severity.toUpperCase();
       if (counts.hasOwnProperty(severity)) {
         counts[severity]++;
       }
-    });
+    }
+  });
 
-    return counts;
-  }, [filteredIssues]);
+  return counts;
+}, [filteredIssues]);
 
   const totalIssues = Object.values(severityCounts).reduce((a, b) => a + b, 0);
   const securityScore = Math.max(0, 100 -
