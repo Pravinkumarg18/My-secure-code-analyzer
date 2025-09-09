@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import API_BASE_URL from "./config";
 import logo from "./logo.svg";
+import logo2 from "./Logo.png";
 
 // ... (all your React component code remains here)
 // BUT remove the Python/Flask code at the bottom
@@ -981,7 +982,7 @@ const clearAllFiles = () => {
 
           <div className="header-title">
   <div className="logo-brand-container">
-    <img className="logo" src={logo} alt="Secro Security Analyzer" />
+    <img className="logo" src={logo2} alt="Secro Security Analyzer" />
     <div className="brand-text-container">
       <h1 className="brand-name">Secro</h1>
       <div className="brand-tagline">Every bug has a story — we make it visible.</div>
