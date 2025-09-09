@@ -380,16 +380,16 @@ const filteredIssues = useMemo(() => {
       return false;
     }
 
-    if (filters.owasp !== "ALL" && !issue.owasp.includes(filters.owasp)) {
+    if (filters.owasp !== "ALL" && !(issue.owasp || '').includes(filters.owasp)) {
       return false;
     }
 
-    if (filters.cwe !== "ALL" && !issue.cwe.includes(filters.cwe)) {
+    if (filters.cwe !== "ALL" && !(issue.cwe || '').includes(filters.cwe)) {
       return false;
     }
 
     if (filters.fileType !== "ALL") {
-      const fileExt = issue.file.substring(issue.file.lastIndexOf('.'));
+      const fileExt = (issue.file || '').substring((issue.file || '').lastIndexOf('.'));
       if (!FILE_EXTENSIONS[filters.fileType]?.includes(fileExt)) {
         return false;
       }
@@ -397,15 +397,17 @@ const filteredIssues = useMemo(() => {
 
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
+      
+      // SAFE VERSION: Handle undefined properties
       const searchableFields = [
-        issue.file,
-        issue.message,
-        issue.category,
-        issue.id,
-        issue.detected_by,
-        issue.owasp,
-        issue.cwe,
-        issue.suggestion
+        issue.file || '',
+        issue.message || '',
+        issue.category || '',
+        issue.id || '',
+        issue.detected_by || '',
+        issue.owasp || '',
+        issue.cwe || '',
+        issue.suggestion || ''
       ].join(" ").toLowerCase();
 
       if (!searchableFields.includes(searchTerm)) {
@@ -425,8 +427,8 @@ const filteredIssues = useMemo(() => {
   };
 
   return filtered.sort((a, b) => {
-    const severityA = a.severity.toUpperCase();
-    const severityB = b.severity.toUpperCase();
+    const severityA = (a.severity || '').toUpperCase();
+    const severityB = (b.severity || '').toUpperCase();
     
     // First sort by severity
     if (severityOrder[severityA] !== severityOrder[severityB]) {
@@ -434,8 +436,8 @@ const filteredIssues = useMemo(() => {
     }
     
     // If same severity, sort by line numbers (handle bundled lines)
-    const linesA = a.bundledLines || [a.line];
-    const linesB = b.bundledLines || [b.line];
+    const linesA = a.bundledLines || [a.line || 0];
+    const linesB = b.bundledLines || [b.line || 0];
     
     // Get the minimum line number for each issue (for sorting)
     const minLineA = Math.min(...linesA.map(line => parseInt(line) || 0));
