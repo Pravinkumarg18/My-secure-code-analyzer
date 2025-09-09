@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import API_BASE_URL from "./config";
-import logo from './logo.svg';
-import logo2 from './logo2.svg';
-import logo3 from './logo3.svg.jpg';
+import logo from "./logo.svg";
 
-
+// ... (all your React component code remains here)
+// BUT remove the Python/Flask code at the bottom
 const SEVERITY_COLORS = {
   CRITICAL: { chip: "critical", row: "severity-critical", chart: "#ef4444" },
   HIGH: { chip: "high", row: "severity-high", chart: "#f59e0b" },
@@ -275,6 +274,7 @@ useEffect(() => {
 }, []);
 
 
+
     const loadReportFromFile = async () => {
     try {
       setIsScanning(true);
@@ -304,7 +304,7 @@ useEffect(() => {
     }
   };
 
-const generateVulnerabilityId = (issue) => {
+ const generateVulnerabilityId = (issue) => {
   // Use category + file for deduplication (same vulnerability in same file)
   return `${issue.category}-${issue.file}`.replace(/\s+/g, '-');
 };
@@ -321,7 +321,9 @@ const deduplicateIssues = (issuesArray) => {
         ...issue,
         uniqueId: id,
         bundledLines: [issue.line],
-        originalCount: 1
+        originalCount: 1,
+        // Store all original issues for detailed information
+        originalIssues: [issue]
       };
     } else {
       // Add line to bundled lines if it's not already there
@@ -329,17 +331,25 @@ const deduplicateIssues = (issuesArray) => {
         bundledIssues[id].bundledLines.push(issue.line);
       }
       bundledIssues[id].originalCount += 1;
+      // Keep reference to all original issues
+      bundledIssues[id].originalIssues.push(issue);
     }
   });
   
   // Convert to array and format the display
   Object.values(bundledIssues).forEach(bundledIssue => {
+    // Sort lines numerically for better display
+    const sortedLines = bundledIssue.bundledLines.sort((a, b) => parseInt(a) - parseInt(b));
+    
     const formattedIssue = {
       ...bundledIssue,
-      line: bundledIssue.bundledLines.join(', '), // Show bundled lines in the table
+      line: sortedLines.join(', '), // Show bundled lines in the table
       message: bundledIssue.originalCount > 1 
         ? `${bundledIssue.message} (${bundledIssue.originalCount} occurrences)`
-        : bundledIssue.message
+        : bundledIssue.message,
+      // Preserve all original data for expanded view
+      bundledLines: sortedLines,
+      originalIssues: bundledIssue.originalIssues
     };
     result.push(formattedIssue);
   });
@@ -363,8 +373,7 @@ const deduplicateIssues = (issuesArray) => {
     setSelectedFiles([]);
     setNotification({ message: 'All issues cleared successfully', type: 'success' });
   };
-
-  const filteredIssues = useMemo(() => {
+const filteredIssues = useMemo(() => {
   const filtered = issues.filter(issue => {
     if (filters.severity !== "ALL" && issue.severity !== filters.severity) {
       return false;
@@ -476,7 +485,7 @@ const deduplicateIssues = (issuesArray) => {
       CRITICAL: 0,
       HIGH: 0,
       MEDIUM: 0,
-      LOW: 0
+      LOW: 0,
     };
 
     filteredIssues.forEach(issue => {
@@ -968,18 +977,20 @@ const clearAllFiles = () => {
       <div className="main-content">
         {/* Header */}
         <div className="header">
-  <div className="header-title">
+          
+
+          <div className="header-title">
   <div className="logo-brand-container">
     <img className="logo" src={logo} alt="Secro Security Analyzer" />
     <div className="brand-text-container">
       <h1 className="brand-name">Secro</h1>
-      <div className="brand-tagline">Every bug has a story — we make it visible</div>
+      <div className="brand-tagline">Every bug has a story — we make it visible.</div>
     </div>
   </div>
 </div>
 
-  <div className="header-actions">
-    <button 
+          <div className="header-actions">
+             <button 
       type="button" 
       className={`icon-btn ${isRefreshing ? 'refreshing' : ''}`} 
       title="Refresh" 
@@ -1010,9 +1021,9 @@ const clearAllFiles = () => {
     e.stopPropagation();
   }}
 />
-  </div>
-</div>
-             
+          </div>
+        </div>
+
         {/* CLI Modal */}
         {showCli && (
           <div className="modal-overlay" onClick={() => setShowCli(false)}>
@@ -1033,7 +1044,10 @@ security-scanner scan --all --output report.html`}
           {/* Upload Card */}
           {/* Upload Card */}
 {/* Upload Card */}
-
+{/* Upload Card */}
+{/* Upload Card */}
+{/* Upload Card */}
+{/* Upload Card */}
 <div className="dashboard-card upload-card">
   <div className="card-header">
     <h2>Upload Files</h2>
@@ -1450,7 +1464,7 @@ security-scanner scan --all --output report.html`}
                 <th>DETECTED BY</th>
               </tr>
             </thead>
-           <tbody>
+            <tbody>
   {filteredIssues.map((issue, index) => (
     <React.Fragment key={issue.uniqueId || index}>
       <tr className={SEVERITY_COLORS[issue.severity]?.row || ""}>
@@ -1483,14 +1497,23 @@ security-scanner scan --all --output report.html`}
                 <h4>Total Occurrences:</h4>
                 <p>{issue.originalCount} occurrence{issue.originalCount !== 1 ? 's' : ''}</p>
               </div>
-              <div className="detail-section">
-                <h4>Code Snippet:</h4>
-                <code>{issue.snippet}</code>
-              </div>
-              <div className="detail-section">
-                <h4>Suggestion:</h4>
-                <p>{issue.suggestion}</p>
-              </div>
+              
+              {/* Show details for each occurrence */}
+              {issue.originalIssues.map((originalIssue, occIndex) => (
+                <div key={occIndex} className="occurrence-detail">
+                  <h5>Occurrence {occIndex + 1} (Line {originalIssue.line}):</h5>
+                  <div className="detail-section">
+                    <h4>Code Snippet:</h4>
+                    <code>{originalIssue.snippet}</code>
+                  </div>
+                  <div className="detail-section">
+                    <h4>Suggestion:</h4>
+                    <p>{originalIssue.suggestion}</p>
+                  </div>
+                  {occIndex < issue.originalIssues.length - 1 && <hr className="occurrence-divider" />}
+                </div>
+              ))}
+              
               <div className="detail-section">
                 <h4>OWASP:</h4>
                 <span className="security-tag">{issue.owasp}</span>
@@ -1519,7 +1542,17 @@ security-scanner scan --all --output report.html`}
       </div>
 
       <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+      <!-- For Orbitron -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- For Exo 2 -->
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- For Rajdhani -->
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- For Audiowide -->
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
         * {
           margin: 0;
           padding: 0;
@@ -1535,6 +1568,97 @@ security-scanner scan --all --output report.html`}
         .filter-item select:empty::before {
           content: "No options available";
           color: #64748b;
+        }
+
+        /* Responsive adjustments for filters */
+        @media (max-width: 1024px) {
+          .filters-row {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          
+          .search-item {
+            grid-column: 1 / -1;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .filters-row {
+            grid-template-columns: 1fr;
+          }
+        }
+        body {
+          background-color: #0f172a;
+          color: #e2e8f0;
+          transition: background-color 0.3s ease;
+        }
+          .drop-zone-subtext {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+        body.light {
+          background-color: #f8fafc;
+          color: #1e293b;
+        }
+
+        .container {
+          display: flex;
+          min-height: 100vh;
+        }
+
+        /* Notification */
+        .notification {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 12px 20px;
+          border-radius: 8px;
+          z-index: 1000;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+          background-color: #10b981;
+          color: white;
+        }
+
+        .notification.error {
+          background-color: #ef4444;
+          color: white;
+        }
+          .occurrence-detail {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+.occurrence-detail h5 {
+  color: #e2e8f0;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.occurrence-divider {
+  border: none;
+  border-top: 1px solid #334155;
+  margin: 16px 0;
+}
+
+/* Light theme adjustments */
+body.light .occurrence-detail {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light .occurrence-detail h5 {
+  color: #1e293b;
+}
+
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
         }
           .header-title {
   display: flex;
@@ -1568,226 +1692,7 @@ security-scanner scan --all --output report.html`}
     gap: 8px;
   }
 }
-
-        /* Responsive adjustments for filters */
-        @media (max-width: 1024px) {
-          .filters-row {
-            grid-template-columns: repeat(2, 1fr);
-          }
-          
-          .search-item {
-            grid-column: 1 / -1;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .filters-row {
-            grid-template-columns: 1fr;
-          }
-        }
-        body {
-          background-color: #0f172a;
-          color: #e2e8f0;
-          transition: background-color 0.3s ease;
-        }
-          .drop-zone-subtext {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  margin-top: 4px;
-}
-
-        body.light {
-          background-color: #f8fafc;
-          color: #1e293b;
-        }
-          .detail-section h4 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #94a3b8;
-}
-
-.detail-section p {
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-
-.detail-section:last-child {
-  margin-bottom: 0;
-}
-
-        .container {
-          display: flex;
-          min-height: 100vh;
-        }
-
-        .logo{
-        size=20px;
-        }
-        /* Notification */
-        .notification {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          padding: 12px 20px;
-          border-radius: 8px;
-          z-index: 1000;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          animation: slideIn 0.3s ease;
-        }
-
-        .notification.success {
-          background-color: #10b981;
-          color: white;
-        }
-
-        .notification.error {
-          background-color: #ef4444;
-          color: white;
-        }
-
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-
-        /* Sidebar */
-        .sidebar {
-          width: 280px;
-          background-color: #1e293b;
-          position: fixed;
-          height: 100vh;
-          left: -280px;
-          transition: left 0.3s ease;
-          z-index: 100;
-          padding: 20px 0;
-          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .sidebar.open {
-          left: 0;
-        }
-
-        .sidebar-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0 20px 20px;
-          border-bottom: 1px solid #334155;
-        }
-
-        .sidebar-header h2 {
-          font-size: 1.5rem;
-          font-weight: 600;
-        }
-
-        .close-sidebar {
-          background: none;
-          border: none;
-          color: #94a3b8;
-          font-size: 1.5rem;
-          cursor: pointer;
-        }
-
-        .sidebar-content {
-          padding: 20px 0;
-        }
-
-        .sidebar-item {
-          display: flex;
-          align-items: center;
-          padding: 12px 20px;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-
-        .sidebar-item:hover {
-          background-color: #334155;
-        }
-
-        .sidebar-icon {
-          margin-right: 12px;
-          font-size: 1.2rem;
-        }
-
-        /* Main Content */
-        .main-content {
-          flex: 1;
-          padding: 0;
-          transition: margin-left 0.3s ease;
-        }
-          /* Add these styles to your existing CSS */
-
-.logo-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo {
-  height: 42px;
-  width: auto;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.brand-name {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-
-.brand-text {
-  font-family: 'Orbitron', 'Courier New', monospace;
-  font-size: 2rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  letter-spacing: 1px;
-  position: relative;
-}
-
-
-.brand-tagline {
-  font-size: 0.8rem;
-  color: #94a3b8;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  margin-top: 4px;
-  font-weight: 500;
-}
-
-/* Animation for the brand name */
-.brand-text {
-  animation: glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-  from {
-    text-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
-  }
-  to {
-    text-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 15px rgba(6, 182, 212, 0.5);
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .brand-text {
-    font-size: 1.75rem;
-  }
-  
-  .brand-tagline {
-    font-size: 0.7rem;
-  }
-  
-  .logo {
-    height: 36px;
-  }
-}
-/* Add these styles to your existing CSS */
+  /* Add these styles to your existing CSS */
 
 .logo-brand-container {
   display: flex;
@@ -1809,8 +1714,8 @@ security-scanner scan --all --output report.html`}
 }
 
 .brand-name {
-  font-family: 'Orbitron', 'Courier New', monospace;
-  font-size: 2.1rem;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 700;
   font-weight: 700;
   color: #3b82f6;
   margin: 0;
@@ -1824,7 +1729,7 @@ security-scanner scan --all --output report.html`}
 
 .brand-tagline {
   font-size: 0.85rem;
-  color: #999a9dff;
+  color: #94a3b8;
   letter-spacing: 1.2px;
   text-transform: uppercase;
   margin-top: 6px;
@@ -1916,24 +1821,72 @@ body.light .brand-tagline {
 body.light .logo-brand-container:hover .brand-name {
   color: #0ea5e9;
 }
-@media (max-width: 480px) {
-  .logo-container {
-    gap: 8px;
-  }
-  
-  .brand-text {
-    font-size: 1.5rem;
-  }
-  
-  .brand-tagline {
-    font-size: 0.6rem;
-    letter-spacing: 1px;
-  }
-  
-  .logo {
-    height: 32px;
-  }
-}
+
+        /* Sidebar */
+        .sidebar {
+          width: 280px;
+          background-color: #1e293b;
+          position: fixed;
+          height: 100vh;
+          left: -280px;
+          transition: left 0.3s ease;
+          z-index: 100;
+          padding: 20px 0;
+          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.open {
+          left: 0;
+        }
+
+        .sidebar-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 20px 20px;
+          border-bottom: 1px solid #334155;
+        }
+
+        .sidebar-header h2 {
+          font-size: 1.5rem;
+          font-weight: 600;
+        }
+
+        .close-sidebar {
+          background: none;
+          border: none;
+          color: #94a3b8;
+          font-size: 1.5rem;
+          cursor: pointer;
+        }
+
+        .sidebar-content {
+          padding: 20px 0;
+        }
+
+        .sidebar-item {
+          display: flex;
+          align-items: center;
+          padding: 12px 20px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+
+        .sidebar-item:hover {
+          background-color: #334155;
+        }
+
+        .sidebar-icon {
+          margin-right: 12px;
+          font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .main-content {
+          flex: 1;
+          padding: 0;
+          transition: margin-left 0.3s ease;
+        }
 
         /* Header */
         .header {
@@ -2270,7 +2223,7 @@ body.light .logo-brand-container:hover .brand-name {
         .download-btn {
           display: block;
           width: 100%;
-          background-color: #7c3aed;
+          background-color: #8b5cf6;
           color: white;
           border: none;
           padding: 10px 16px;
