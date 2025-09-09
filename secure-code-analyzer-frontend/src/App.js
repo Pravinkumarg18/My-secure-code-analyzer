@@ -1,21 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import API_BASE_URL from "./config";
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  SignIn,
-  SignUp,
-  UserButton,
-  useUser,
-  useAuth
-} from "@clerk/clerk-react";
+import logo from './logo.svg';
+import logo2 from './logo2.svg';
+import logo3 from './logo3.svg.jpg';
 
-const clerkPubKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY || "pk_test_your_publishable_key";
 
-// ... (all your React component code remains here)
-// BUT remove the Python/Flask code at the bottom
 const SEVERITY_COLORS = {
   CRITICAL: { chip: "critical", row: "severity-critical", chart: "#ef4444" },
   HIGH: { chip: "high", row: "severity-high", chart: "#f59e0b" },
@@ -285,16 +275,6 @@ useEffect(() => {
 }, []);
 
 
-    // Load initial data with a small delay
-  //   const timer = setTimeout(() => {
-  //     loadInitialIssues();
-  //   }, 500);
-
-  //   return () => {
-  //     isMounted = false;
-  //     clearTimeout(timer);
-  //   };
-  // }, []); // Empty dependency array ensures this runs only once
     const loadReportFromFile = async () => {
     try {
       setIsScanning(true);
@@ -323,29 +303,7 @@ useEffect(() => {
       setIsScanning(false);
     }
   };
-//   const handleRefresh = useCallback(async () => {
-//   if (isRefreshing) return;
-//   setIsRefreshing(true);
 
-//   try {
-//     const response = await fetch(`${API_BASE_URL}/refresh`, {
-//       method: 'POST',
-//     });
-
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-
-//     // After backend refresh, load the updated report
-//     await loadReportFromFile();
-    
-//   } catch (err) {
-//     console.error('Refresh error:', err);
-//     setNotification({ message: 'Refresh failed: ' + err.message, type: 'error' });
-//   } finally {
-//     setIsRefreshing(false);
-//   }
-// }, [isRefreshing]);
 const generateVulnerabilityId = (issue) => {
   // Use category + file for deduplication (same vulnerability in same file)
   return `${issue.category}-${issue.file}`.replace(/\s+/g, '-');
@@ -1010,20 +968,18 @@ const clearAllFiles = () => {
       <div className="main-content">
         {/* Header */}
         <div className="header">
-          
+  <div className="header-title">
+  <div className="logo-brand-container">
+    <img className="logo" src={logo} alt="Secro Security Analyzer" />
+    <div className="brand-text-container">
+      <h1 className="brand-name">Secro</h1>
+      <div className="brand-tagline">Every bug has a story — we make it visible</div>
+    </div>
+  </div>
+</div>
 
-          <div className="header-title">
-            <h1>Security Analyzer</h1>
-            <span className="file-info">
-              {selectedFiles.length > 0
-                ? `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} selected`
-                : 'No files selected'
-              } <span className="scanned-badge">✓ Scanned</span>
-            </span>
-          </div>
-
-          <div className="header-actions">
-             <button 
+  <div className="header-actions">
+    <button 
       type="button" 
       className={`icon-btn ${isRefreshing ? 'refreshing' : ''}`} 
       title="Refresh" 
@@ -1054,9 +1010,9 @@ const clearAllFiles = () => {
     e.stopPropagation();
   }}
 />
-          </div>
-        </div>
-
+  </div>
+</div>
+             
         {/* CLI Modal */}
         {showCli && (
           <div className="modal-overlay" onClick={() => setShowCli(false)}>
@@ -1077,10 +1033,7 @@ security-scanner scan --all --output report.html`}
           {/* Upload Card */}
           {/* Upload Card */}
 {/* Upload Card */}
-{/* Upload Card */}
-{/* Upload Card */}
-{/* Upload Card */}
-{/* Upload Card */}
+
 <div className="dashboard-card upload-card">
   <div className="card-header">
     <h2>Upload Files</h2>
@@ -1566,6 +1519,7 @@ security-scanner scan --all --output report.html`}
       </div>
 
       <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
         * {
           margin: 0;
           padding: 0;
@@ -1582,6 +1536,38 @@ security-scanner scan --all --output report.html`}
           content: "No options available";
           color: #64748b;
         }
+          .header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .logo {
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    height: 28px;
+  }
+  
+  .header-title {
+    gap: 8px;
+  }
+}
 
         /* Responsive adjustments for filters */
         @media (max-width: 1024px) {
@@ -1635,6 +1621,9 @@ security-scanner scan --all --output report.html`}
           min-height: 100vh;
         }
 
+        .logo{
+        size=20px;
+        }
         /* Notification */
         .notification {
           position: fixed;
@@ -1727,6 +1716,224 @@ security-scanner scan --all --output report.html`}
           padding: 0;
           transition: margin-left 0.3s ease;
         }
+          /* Add these styles to your existing CSS */
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  height: 42px;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.brand-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.brand-text {
+  font-family: 'Orbitron', 'Courier New', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 1px;
+  position: relative;
+}
+
+
+.brand-tagline {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Animation for the brand name */
+.brand-text {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+  }
+  to {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 15px rgba(6, 182, 212, 0.5);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .brand-text {
+    font-size: 1.75rem;
+  }
+  
+  .brand-tagline {
+    font-size: 0.7rem;
+  }
+  
+  .logo {
+    height: 36px;
+  }
+}
+/* Add these styles to your existing CSS */
+
+.logo-brand-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.logo {
+  height: 48px;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.brand-text-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brand-name {
+  font-family: 'Orbitron', 'Courier New', monospace;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #3b82f6;
+  margin: 0;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  position: relative;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+
+.brand-tagline {
+  font-size: 0.85rem;
+  color: #999a9dff;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-top: 6px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Light theme adjustments */
+body.light .brand-name {
+  color: #2563eb;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+body.light .brand-name::after {
+  background: linear-gradient(90deg, 
+    rgba(37, 99, 235, 0.8) 0%, 
+    rgba(14, 165, 233, 0.8) 50%, 
+    rgba(37, 99, 235, 0.8) 100%);
+}
+
+body.light .brand-tagline {
+  color: #64748b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .brand-name {
+    font-size: 1.9rem;
+  }
+  
+  .brand-tagline {
+    font-size: 0.8rem;
+  }
+  
+  .logo {
+    height: 42px;
+  }
+}
+
+@media (max-width: 768px) {
+  .brand-name {
+    font-size: 1.7rem;
+  }
+  
+  .brand-tagline {
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+  
+  .logo {
+    height: 38px;
+  }
+  
+  .logo-brand-container {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-brand-container {
+    gap: 8px;
+  }
+  
+  .brand-name {
+    font-size: 1.5rem;
+  }
+  
+  .brand-tagline {
+    font-size: 0.65rem;
+    margin-top: 4px;
+  }
+  
+  .logo {
+    height: 34px;
+  }
+}
+
+/* Hover effects for interactivity */
+.logo-brand-container:hover .logo {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+.logo-brand-container:hover .brand-name {
+  color: #06b6d4;
+  transition: color 0.3s ease;
+}
+
+body.light .logo-brand-container:hover .brand-name {
+  color: #0ea5e9;
+}
+@media (max-width: 480px) {
+  .logo-container {
+    gap: 8px;
+  }
+  
+  .brand-text {
+    font-size: 1.5rem;
+  }
+  
+  .brand-tagline {
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+  }
+  
+  .logo {
+    height: 32px;
+  }
+}
 
         /* Header */
         .header {
@@ -2063,7 +2270,7 @@ security-scanner scan --all --output report.html`}
         .download-btn {
           display: block;
           width: 100%;
-          background-color: #8b5cf6;
+          background-color: #7c3aed;
           color: white;
           border: none;
           padding: 10px 16px;

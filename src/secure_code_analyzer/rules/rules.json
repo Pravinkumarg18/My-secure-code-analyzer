@@ -589,29 +589,33 @@
   "language": "javascript",
   "category": "Dangerous Function",
   "owasp": "A03:2021-Injection",
+  "cwe": "CWE-94",
   "severity": "HIGH",
-  "type": "context-ast",
+  "type": "ast",
   "nodeType": "CallExpression",
   "calleeName": "setTimeout",
-  "argumentType": "Literal",
-  "argumentPattern": ".*['\"].*",
-  "message": "setTimeout called with a string argument → code execution risk.",
-  "suggestion": "Use function references instead of strings."
-},
+  "argIsString": true,
+  "argumentPosition": 0,
+  "message": "setTimeout called with a string → dynamic code execution like eval().",
+  "suggestion": "Always pass a function reference or arrow function instead of a string."
+}
+,
 {
   "id": "JS-SETINTERVAL-AST-001",
   "language": "javascript",
   "category": "Dangerous Function",
   "owasp": "A03:2021-Injection",
+  "cwe": "CWE-94",
   "severity": "HIGH",
-  "type": "context-ast",
+  "type": "ast",
   "nodeType": "CallExpression",
   "calleeName": "setInterval",
-  "argumentType": "Literal",
-  "argumentPattern": ".*['\"].*",
-  "message": "setInterval called with a string argument → code execution risk.",
-  "suggestion": "Use function references instead of strings."
-},
+  "argIsString": true,
+  "argumentPosition": 0,
+  "message": "setInterval called with a string → dynamic code execution like eval().",
+  "suggestion": "Always pass a function reference or arrow function instead of a string."
+}
+,
 {
   "id": "JS-DOCWRITE-AST-001",
   "language": "javascript",
@@ -792,15 +796,27 @@
   "language": "javascript",
   "category": "Code Injection",
   "owasp": "A03:2021-Injection",
-  "severity": "HIGH",
+  "cwe": "CWE-94",
+  "severity": "CRITICAL",
   "type": "context-ast",
   "nodeType": "CallExpression",
   "calleeName": "setTimeout",
+  "argumentPosition": 0,
   "requiresTaint": true,
-  "sources": ["document.location", "window.location", "location.search", "document.URL", "localStorage"],
-  "message": "setTimeout() with user-controlled string → Code Execution.",
-  "suggestion": "Always pass function references, not strings."
-},
+  "sources": [
+    "document.location",
+    "window.location",
+    "location.search",
+    "location.hash",
+    "document.URL",
+    "document.cookie",
+    "localStorage",
+    "sessionStorage"
+  ],
+  "message": "setTimeout() with user-controlled string → Remote Code Execution.",
+  "suggestion": "Always pass function references or arrow functions, never strings."
+}
+,
 {
   "id": "JS-REDIRECT-TAINT-001",
   "language": "javascript",
@@ -844,31 +860,55 @@
     "message": "header() with user input may lead to HTTP Response Splitting.",
     "suggestion": "Never pass raw user input to header()."
   },{
-  "id": "JS-TIMEOUT-AST-001",
+  "id": "JS-TIMEOUT-TAINT-001",
   "language": "javascript",
-  "category": "Dangerous Function",
+  "category": "Code Injection",
   "owasp": "A03:2021-Injection",
-  "severity": "HIGH",
-  "type": "ast",
+  "cwe": "CWE-94",
+  "severity": "CRITICAL",
+  "type": "context-ast",
   "nodeType": "CallExpression",
   "calleeName": "setTimeout",
-  "argIsString": true,
-  "message": "setTimeout called with a string → dynamic code execution like eval().",
-  "suggestion": "Pass a function reference instead of a string."
-},
+  "argumentPosition": 0,
+  "requiresTaint": true,
+  "sources": [
+    "document.location",
+    "window.location",
+    "location.search",
+    "location.hash",
+    "document.cookie",
+    "localStorage",
+    "sessionStorage"
+  ],
+  "message": "setTimeout called with user-controlled string → Remote Code Execution.",
+  "suggestion": "Always pass a function instead of a string, and never trust unvalidated user input."
+}
+,
 {
-  "id": "JS-INTERVAL-AST-001",
+  "id": "JS-INTERVAL-TAINT-001",
   "language": "javascript",
-  "category": "Dangerous Function",
+  "category": "Code Injection",
   "owasp": "A03:2021-Injection",
-  "severity": "HIGH",
-  "type": "ast",
+  "cwe": "CWE-94",
+  "severity": "CRITICAL",
+  "type": "context-ast",
   "nodeType": "CallExpression",
   "calleeName": "setInterval",
-  "argIsString": true,
-  "message": "setInterval called with a string → dynamic code execution like eval().",
-  "suggestion": "Pass a function reference instead of a string."
-},
+  "argumentPosition": 0,
+  "requiresTaint": true,
+  "sources": [
+    "document.location",
+    "window.location",
+    "location.search",
+    "location.hash",
+    "document.cookie",
+    "localStorage",
+    "sessionStorage"
+  ],
+  "message": "setInterval called with user-controlled string → possible Remote Code Execution.",
+  "suggestion": "Pass a function reference or arrow function instead of string arguments. Always validate/sanitize user input."
+}
+,
 {
   "id": "JS-LOCALSTORAGE-AST-001",
   "language": "javascript",
@@ -1489,19 +1529,30 @@
   "suggestion": "Avoid Function(); use safer alternatives."
 },
 {
-  "id": "JS-SETTIMEOUT-001",
+  "id": "JS-SETTIMEOUT-TAINT-001",
   "language": "javascript",
   "category": "Code Injection",
   "owasp": "A03:2021-Injection",
   "cwe": "CWE-94",
-  "severity": "HIGH",
-  "type": "ast",
+  "severity": "CRITICAL",
+  "type": "context-ast",
   "nodeType": "CallExpression",
-  "calleeName": "setTimeout",
-  "argIsString": true,
-  "message": "setTimeout with string executes code.",
-  "suggestion": "Use function callbacks instead of string arguments."
-},
+  "calleeName": "setTimeout|setInterval",
+  "argumentPosition": 0,
+  "requiresTaint": true,
+  "sources": [
+    "document.location",
+    "window.location",
+    "location.search",
+    "location.hash",
+    "localStorage",
+    "sessionStorage",
+    "document.cookie"
+  ],
+  "message": "setTimeout/setInterval called with user-controlled string → Code Execution.",
+  "suggestion": "Always pass function callbacks instead of string arguments. Validate and sanitize any user input."
+}
+,
 {
   "id": "JS-OPENREDIRECT-001",
   "language": "javascript",
@@ -1740,13 +1791,14 @@
   "language": "javascript",
   "type": "heuristic",
   "category": "Secrets",
-  "pattern": "(api[_-]?key|secret|password|auth[_-]?token)",
+  "pattern": "\\b(api[_-]?key|secret|password|auth[_-]?token)\\b\\s*[:=]\\s*['\"][A-Za-z0-9/+=._-]{6,}['\"]",
   "severity": "HIGH",
   "cwe": "CWE-798",
-  "message": "Possible hardcoded secret or credential detected.",
-  "suggestion": "Do not hardcode secrets. Move them to environment variables or a secure vault.",
+  "message": "Hardcoded secret, API key, or password detected in source code.",
+  "suggestion": "Do not hardcode secrets. Store them in environment variables or a secure vault.",
   "owasp": "A02:2021-Cryptographic Failures"
 }
+
 ,
   {
     "id": "PHP-HEUR-004",
@@ -1966,13 +2018,14 @@
   "language": "javascript",
   "type": "heuristic",
   "category": "Code Injection",
-  "pattern": "setTimeout\\s*\\(\\s*['\"`]|setInterval\\s*\\(\\s*['\"`]",
+  "pattern": "\\b(setTimeout|setInterval)\\s*\\(\\s*(['\"`])",
   "severity": "HIGH",
   "message": "setTimeout/setInterval called with a string argument → possible code injection.",
-  "suggestion": "Pass a function reference instead of a string to setTimeout/setInterval.",
+  "suggestion": "Always pass a function reference or arrow function instead of a string to setTimeout/setInterval.",
   "owasp": "A03:2021-Injection",
   "cwe": "CWE-95"
 }
+
 ,
   {
     "id": "PHP-HEUR-023",
@@ -1990,13 +2043,14 @@
   "language": "javascript",
   "type": "heuristic",
   "category": "DOM XSS / Dangerous Function",
-  "pattern": "document\\.write",
+  "pattern": "\\bdocument\\.write\\s*\\(",
   "severity": "HIGH",
   "message": "Use of document.write() can enable DOM XSS and is considered unsafe.",
-  "suggestion": "Avoid document.write(); use safe DOM manipulation APIs instead.",
+  "suggestion": "Avoid document.write(); use safe DOM manipulation methods like textContent, createElement, or DOMPurify for sanitization.",
   "owasp": "A03:2021-Injection",
   "cwe": "CWE-79"
 }
+
 ,
   {
     "id": "PHP-HEUR-025",
@@ -2488,14 +2542,15 @@
   "id": "PY-HARDCODED-SECRET",
   "language": "python",
   "type": "regex",
-  "pattern": "(AKIA[0-9A-Z]{16}|(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[A-Za-z0-9/+=]{32,})",
+  "pattern": "(?i)(AKIA[0-9A-Z]{16}|(?:['\"]?(?:password|passwd|pwd|secret|api[_-]?key|token)['\"]?\\s*[:=]\\s*['\"][A-Za-z0-9/+=]{8,}['\"])|(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])[A-Za-z0-9/+=]{32,})",
   "severity": "HIGH",
   "category": "Secrets",
-  "message": "Hardcoded API key or secret found.",
-  "suggestion": "Remove secrets from code. Use environment variables or a secrets manager instead of committing them.",
+  "message": "Hardcoded API key, password, or secret detected in Python code.",
+  "suggestion": "Remove hardcoded secrets. Store them securely in environment variables, configuration files, or a secrets manager.",
   "owasp": "A02:2021-Cryptographic Failures",
   "cwe": "CWE-798"
 }
+
 ,
   {
     "id": "PY-TAINT-CMD",
@@ -3478,12 +3533,13 @@
   "type": "heuristic",
   "severity": "MEDIUM",
   "category": "Side-Channel",
-  "pattern": "setTimeout\\(.*(password|secret|token|compare)",
-  "message": "Timing-based security check detected; this may leak sensitive information.",
-  "suggestion": "Use constant-time comparison libraries for sensitive data validation.",
+  "pattern": "setTimeout\\s*\\([^)]*\\b(password|secret|token|compare)\\b",
+  "message": "Timing-based security check detected; this may leak sensitive information through observable delays.",
+  "suggestion": "Do not use time-based checks for secrets. Use constant-time comparison functions (e.g., crypto.timingSafeEqual in Node.js) to prevent timing attacks.",
   "owasp": "A02:2021-Cryptographic Failures",
   "cwe": "CWE-208"
 }
+
 ,{
   "id": "JAVA-INT-OVERFLOW",
   "language": "java",
@@ -4101,23 +4157,25 @@
   "type": "regex",
   "severity": "CRITICAL",
   "category": "Deserialization",
-  "pattern": "unserialize\\(",
+  "pattern": "(?i)unserialize\\s*\\(\\s*\\$",
   "message": "Insecure deserialization detected. PHP's unserialize() is dangerous with untrusted input.",
-  "suggestion": "Avoid unserialize() on user input. Use JSON or other safe formats.",
+  "suggestion": "Avoid using unserialize() on user input. Use safer formats like JSON (json_decode/json_encode) and always validate data sources.",
   "owasp": "A08:2021-Software and Data Integrity Failures",
   "cwe": "CWE-502"
-},{
+}
+,{
   "id": "JS-INSECURE-DESERIALIZATION-001",
   "language": "javascript",
   "type": "regex",
   "severity": "CRITICAL",
   "category": "Insecure Deserialization",
-  "pattern": "eval\\s*\\(\\s*JSON\\.parse",
+  "pattern": "(?i)eval\\s*\\(\\s*JSON\\.parse\\s*\\(",
   "message": "Insecure deserialization: eval() used with JSON.parse may allow remote code execution.",
-  "suggestion": "Avoid using eval() on parsed JSON. Use JSON.parse safely without wrapping it in eval, and use trusted data sources.",
+  "suggestion": "Avoid wrapping JSON.parse inside eval(). Use JSON.parse alone with trusted data sources. If validation is needed, sanitize and validate input explicitly.",
   "owasp": "A08:2021-Software and Data Integrity Failures",
   "cwe": "CWE-502"
 }
+
 ,{
     "id": "PY-PATH-TRAVERSAL",
     "language": "python",
@@ -4396,12 +4454,13 @@
   "type": "regex",
   "severity": "CRITICAL",
   "category": "Authentication",
-  "pattern": "(['\"][aA]dmin['\"]|['\"][pP]assword['\"]|['\"][sS]ecret['\"])",
-  "message": "Hardcoded credentials or secrets detected in JavaScript logic.",
-  "suggestion": "Do not hardcode usernames, passwords, or secrets in client-side or server-side code. Use secure environment variables, vaults, or API tokens.",
+  "pattern": "(?i)(['\"](?:admin|root|password|passwd|pwd|secret|apikey|api[_-]?key|token|access[_-]?key)['\"])",
+  "message": "Hardcoded credentials or secrets detected in JavaScript code.",
+  "suggestion": "Do not hardcode usernames, passwords, API keys, or tokens in client-side or server-side code. Use secure environment variables, configuration files, or a secrets manager.",
   "owasp": "A02:2021-Cryptographic Failures",
   "cwe": "CWE-798"
 }
+
 ,{
   "id": "JAVA-WEAK-HASH-MD5",
   "language": "java",
@@ -4546,10 +4605,11 @@
   "category": "Cryptography",
   "cwe": "CWE-256",
   "owasp": "A02:2021-Cryptographic Failures",
-  "pattern": "String\\s+password\\s*=\\s*request\\.getParameter\\(|String\\s+password\\s*=\\s*\".*\"",
+  "pattern": "(?i)String\\s+(password|passwd|pwd)\\s*=\\s*(request\\.getParameter\\([^)]*\\)|\"[^\"]+\")",
   "message": "Plaintext password stored or transmitted without encryption.",
-  "suggestion": "Never store or transmit passwords in plaintext. Use strong password hashing (bcrypt, PBKDF2, Argon2) and TLS for transmission."
-},{
+  "suggestion": "Never store or transmit passwords in plaintext. Use strong password hashing (bcrypt, PBKDF2, Argon2) for storage and TLS for transmission."
+}
+,{
   "id": "JAVA-INSECURE-FILE-OVERWRITE",
   "language": "java",
   "type": "regex",
@@ -4700,10 +4760,11 @@
   "category": "Authentication",
   "cwe": "CWE-256",
   "owasp": "A07:2021-Identification and Authentication Failures",
-  "pattern": "password\\s*[=]+\\s*['\\\"]?\\s*\\+",
+  "pattern": "(?i)(\"|')\\s*password\\s*['\"]?\\s*\\+|(?i)password\\s*=\\s*['\"][^'\"]+['\"]",
   "message": "Password compared or stored in plaintext inside SQL query.",
-  "suggestion": "Never compare or store passwords in plaintext. Use bcrypt, Argon2, or PBKDF2 for hashing and compare hashed values."
-},{
+  "suggestion": "Never store or compare plaintext passwords in SQL queries. Use salted hashing (bcrypt, Argon2, PBKDF2) and compare hashed values instead."
+}
+,{
   "id": "JAVA-HARDCODED-API-KEY",
   "language": "java",
   "type": "regex",
@@ -4711,10 +4772,11 @@
   "category": "Secrets Management",
   "cwe": "CWE-798",
   "owasp": "A07:2021-Identification and Authentication Failures",
-  "pattern": "(API_KEY|SECRET|TOKEN)\\s*=\\s*\"[A-Za-z0-9+/=]{16,}\"",
-  "message": "Hardcoded API key or secret detected in source code.",
-  "suggestion": "Remove hardcoded API keys/secrets. Store them securely in environment variables or a secrets manager."
-},{
+  "pattern": "(?i)\\b(API[_-]?KEY|SECRET|TOKEN|ACCESS[_-]?KEY|AUTH)\\b\\s*=\\s*\"[A-Za-z0-9+/=_\\-]{16,}\"",
+  "message": "Hardcoded API key, token, or secret detected in Java source code.",
+  "suggestion": "Do not hardcode API keys/secrets. Use environment variables, secure config files, or a secrets manager (e.g., Vault, AWS Secrets Manager)."
+}
+,{
   "id": "JAVA-INSECURE-RANDOMNESS",
   "language": "java",
   "type": "regex",
@@ -4784,17 +4846,18 @@
     "suggestion": "Avoid executing OS commands with user input. If necessary, validate and whitelist inputs rigorously."
   },
   {
-    "id": "JAVA-HARDCODED-SECRET",
-    "language": "java",
-    "type": "regex",
-    "severity": "CRITICAL",
-    "category": "Hardcoded Secrets",
-    "cwe": "CWE-798",
-    "owasp": "A05:2021-Security Misconfiguration",
-    "pattern": "(?i)(password|secret|api[_-]?key|token)\\s*=\\s*\"[^\"]+\"",
-    "message": "Hardcoded Secret: Sensitive information like API keys, passwords, or tokens are embedded in source code.",
-    "suggestion": "Store secrets in environment variables or secure vaults. Never commit secrets into source code."
-  },
+  "id": "JAVA-HARDCODED-SECRET",
+  "language": "java",
+  "type": "regex",
+  "severity": "CRITICAL",
+  "category": "Hardcoded Secrets",
+  "cwe": "CWE-798",
+  "owasp": "A05:2021-Security Misconfiguration",
+  "pattern": "(?i)\\b(password|passwd|secret|api[_-]?key|token|auth|credential)\\b\\s*=\\s*\"[A-Za-z0-9+/=:_\\-]{8,}\"",
+  "message": "Hardcoded secret or credential detected in Java source.",
+  "suggestion": "Remove hardcoded secrets. Use environment variables, config files, or secret managers (e.g., HashiCorp Vault, AWS Secrets Manager)."
+}
+,
   {
     "id": "JAVA-PATH-TRAVERSAL",
     "language": "java",
@@ -5054,16 +5117,25 @@
   "language": "javascript",
   "category": "Code Injection",
   "severity": "CRITICAL",
-  "type": "context-ast",
-  "nodeType": "CallExpression",
-  "calleeName": "eval",
-  "requiresTaint": true,
-  "sources": ["document.location", "window.location", "location.search", "localStorage", "sessionStorage"],
-  "message": "eval() with user input → Remote Code Execution.",
-  "suggestion": "Avoid eval(); use JSON.parse, structuredClone, or safe parsers.",
+  "type": "taint-ast",
+  "sources": [
+    "document.location",
+    "window.location",
+    "location.search",
+    "localStorage",
+    "sessionStorage",
+    "req.query",
+    "req.body"
+  ],
+  "sinks": ["eval"],
+  "argumentPosition": 0,
+  "requireArgumentType": ["Identifier", "BinaryExpression", "TemplateLiteral"],
+  "message": "User-controlled input flows into eval() → Remote Code Execution (RCE).",
+  "suggestion": "Never pass user input to eval(). Replace with JSON.parse, structuredClone, or safe parsers.",
   "owasp": "A03:2021-Injection",
   "cwe": "CWE-95"
-},
+}
+,
 {
   "id": "JS-INNERHTML-TAINT-001",
   "language": "javascript",
@@ -5098,17 +5170,18 @@
   "id": "JS-SETTIMEOUT-TAINT-001",
   "language": "javascript",
   "category": "Code Injection",
-  "severity": "HIGH",
-  "type": "context-ast",
-  "nodeType": "CallExpression",
-  "calleeName": "setTimeout|setInterval",
-  "requiresTaint": true,
-  "sources": ["document.location", "window.location", "location.search", "localStorage"],
-  "message": "setTimeout/setInterval with user-controlled string → Code Execution.",
-  "suggestion": "Always pass function references or arrow functions instead of strings.",
+  "severity": "CRITICAL",
+  "type": "taint-ast",
+  "sources": ["document.location", "window.location", "location.search", "localStorage", "sessionStorage", "req.query", "req.body"],
+  "sinks": ["setTimeout", "setInterval"],
+  "argumentPosition": 0,
+  "requireArgumentType": ["Identifier", "BinaryExpression", "TemplateLiteral"],
+  "message": "User-controlled data flows into setTimeout/setInterval → possible code injection (eval-like).",
+  "suggestion": "Do not use user-controlled strings in timers. Use safe callbacks or validated constants.",
   "owasp": "A03:2021-Injection",
   "cwe": "CWE-95"
-},
+}
+,
 {
   "id": "JS-CONSOLE-001",
   "language": "javascript",
@@ -5311,12 +5384,13 @@
   "nodeType": "CallExpression",
   "calleeName": "setTimeout|setInterval",
   "argumentPosition": 0,
-  "argumentType": "LiteralString",
-  "message": "setTimeout/setInterval called with a string → dynamic code execution risk (eval-like).",
-  "suggestion": "Use a function reference or arrow function instead of passing string code.",
+  "argumentType": "Identifier|BinaryExpression|TemplateLiteral",
+  "message": "setTimeout/setInterval called with dynamic or user-influenced string → eval-like execution risk.",
+  "suggestion": "Use a function reference or arrow function instead of passing strings. Do not construct timers with user input.",
   "owasp": "A03:2021-Injection",
   "cwe": "CWE-95"
-},
+}
+,
 {
   "id": "JS-TEMP-FILE-002",
   "language": "javascript",
@@ -6070,5 +6144,13 @@
     "owasp": "A01:2021-Broken Access Control",
     "cwe": "CWE-285"
   }
+
+
+
+
+
+
+
+
 
 ]

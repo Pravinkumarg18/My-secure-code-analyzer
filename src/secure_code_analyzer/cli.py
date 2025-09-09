@@ -7,7 +7,7 @@ import tempfile
 import uuid
 import re
 
-from flask import Flask, request, jsonify, send_from_directory  # ADDED request here
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from secure_code_analyzer.core.scanner import scan_file
 from secure_code_analyzer.core.reporters import (
@@ -43,18 +43,32 @@ def collect_files(paths):
 
 
 def run_scan(files_to_scan):
-    """Run scan on given files and return list of issues."""
+    """Run scan on given files and return list of issues (deduped, per file order)."""
     all_issues = []
     for file in files_to_scan:
         try:
             issues = scan_file(file)
             if issues:
-                print(f"\nFound {len(issues)} issues in {file}:")
+                # Deduplicate per file
+                seen = {}
                 for issue in issues:
+                    key = (issue["message"], issue["file"])
+                    if key not in seen:
+                        seen[key] = issue
+                        seen[key]["lines"] = [issue.get("line", 0)]
+                    else:
+                        seen[key]["lines"].append(issue.get("line", 0))
+                
+                deduped_issues = list(seen.values())
+
+                print(f"\nFound {len(deduped_issues)} unique issues in {file}:")
+                for issue in deduped_issues:
+                    line_info = ", ".join(map(str, sorted(issue["lines"])))
                     print(
-                        f"  [{issue['severity']}] {issue['file']}:{issue['line']} - {issue['message']}"
+                        f"  [{issue['severity']}] {issue['file']}:{line_info} - {issue['message']}"
                     )
-                all_issues.extend(issues)
+
+                all_issues.extend(deduped_issues)
             else:
                 print(f"\nNo issues found in {file}")
         except Exception as e:
@@ -68,6 +82,8 @@ def run_scan(files_to_scan):
                 }
             )
     return all_issues
+
+
 
 
 def cli_mode(args):
@@ -96,24 +112,17 @@ def cli_mode(args):
 def serve_mode():
     """Run Flask server for frontend integration."""
     app = Flask(__name__)
+    CORS(app)
 
-    # --- CORRECT CORS CONFIGURATION ---
-    CORS(app, origins=[
-        "https://final-commit-1.vercel.app",
-        "http://localhost:3000"
-    ], supports_credentials=True)
+
     
-    @app.route("/scan", methods=["POST", "OPTIONS"])
+    @app.route("/scan", methods=["POST"])
     def scan_endpoint():
         """
         Upload and scan files via API.
         Expects files in multipart form-data.
         """
         try:
-            # Handle preflight OPTIONS request
-            if request.method == "OPTIONS":
-                return jsonify({"status": "preflight"}), 200
-                
             print("=== SCAN REQUEST RECEIVED ===")
             
             if "files" not in request.files:
@@ -264,18 +273,17 @@ def serve_mode():
             print(f"Unexpected error in scan endpoint: {e}")
             return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
+
+    
+
     @app.route("/reports/<path:filename>", methods=["GET"])
     def serve_reports(filename):
         """Serve saved reports to frontend."""
         return send_from_directory(REPORTS_DIR, filename)
 
-    @app.route("/refresh", methods=["POST", "OPTIONS"])  # Add OPTIONS here too
+    @app.route("/refresh", methods=["POST"])
     def refresh_scan():
         """Re-run scan on last uploaded files."""
-        # Handle preflight OPTIONS request
-        if request.method == "OPTIONS":
-            return jsonify({"status": "preflight"}), 200
-            
         upload_dir = "uploads"
         if not os.path.exists(upload_dir):
             return jsonify({"error": "No uploaded files to rescan"}), 400
