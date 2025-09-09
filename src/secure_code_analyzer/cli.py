@@ -151,11 +151,15 @@ def serve_mode():
                     print(f"Rejected unsafe filename: {original_filename}")
                     continue
 
-                if safe_path.lower().endswith(".zip"):
-                    # Extract ZIP safely while preserving original structure
+                # Check if it's a ZIP file FIRST
+                if original_filename.lower().endswith('.zip'):
+                    # Save ZIP file temporarily
+                    zip_temp_path = os.path.join("uploads", f"temp_{uuid.uuid4().hex}.zip")
+                    f.save(zip_temp_path)
+                    
                     try:
                         print(f"Extracting ZIP: {original_filename}")
-                        with zipfile.ZipFile(f) as zip_ref:
+                        with zipfile.ZipFile(zip_temp_path) as zip_ref:
                             zip_files = zip_ref.namelist()
                             print(f"ZIP contains {len(zip_files)} files")
                             
@@ -170,7 +174,7 @@ def serve_mode():
                                     continue
                                     
                                 # Only process supported file types
-                                if any(member_path.endswith(ext) for ext in SUPPORTED_EXTENSIONS):
+                                if any(member.lower().endswith(ext) for ext in SUPPORTED_EXTENSIONS):
                                     # Create a unique directory for this ZIP's contents
                                     zip_base_name = os.path.splitext(original_filename)[0]
                                     safe_zip_dir = re.sub(r'[^a-zA-Z0-9_]', '_', zip_base_name)
@@ -189,12 +193,18 @@ def serve_mode():
                                     original_name_in_zip = f"{original_filename}/{member_path}"
                                     file_mapping[target_path] = original_name_in_zip
                                     filepaths.append(target_path)
-                                    print(f"Extracted: {member_path}")
+                                    print(f"Extracted: {member_path} -> {target_path}")
                     except Exception as e:
                         print(f"ZIP extraction failed: {e}")
                         return jsonify({"error": f"Failed to extract ZIP: {e}"}), 400
+                    finally:
+                        # Clean up temporary ZIP file
+                        try:
+                            os.remove(zip_temp_path)
+                        except:
+                            pass
                 else:
-                    # Check if it's a supported file type
+                    # Regular file - check if supported
                     if not any(safe_path.lower().endswith(ext) for ext in SUPPORTED_EXTENSIONS):
                         print(f"Skipping unsupported file type: {original_filename}")
                         continue
@@ -211,7 +221,7 @@ def serve_mode():
                     f.save(path)
                     file_mapping[path] = original_filename  # Store original name mapping
                     filepaths.append(path)
-                    print(f"Saved: {original_filename} -> {unique_filename}")
+                    print(f"Saved: {original_filename} -> {path}")
 
             print(f"Total files to scan: {len(filepaths)}")
             if not filepaths:
@@ -251,15 +261,18 @@ def serve_mode():
             for filepath in filepaths:
                 try:
                     # Remove the file
-                    os.remove(filepath)
-                    # Try to remove empty directories
-                    directory = os.path.dirname(filepath)
-                    if directory and directory != "uploads" and os.path.exists(directory):
-                        try:
-                            os.rmdir(directory)
-                        except OSError:
-                            pass  # Directory not empty, that's fine
-                    print(f"Cleaned up: {filepath}")
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+                        # Try to remove empty directories
+                        directory = os.path.dirname(filepath)
+                        if (directory and directory != "uploads" and 
+                            os.path.exists(directory) and 
+                            not os.listdir(directory)):
+                            try:
+                                os.rmdir(directory)
+                            except OSError:
+                                pass  # Directory not empty, that's fine
+                        print(f"Cleaned up: {filepath}")
                 except Exception as e:
                     print(f"Warning: Could not clean up file {filepath}: {e}")
 
@@ -271,10 +284,11 @@ def serve_mode():
 
         except Exception as e:
             print(f"Unexpected error in scan endpoint: {e}")
+            import traceback
+            traceback.print_exc()
             return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
-
-    
+        
 
     @app.route("/reports/<path:filename>", methods=["GET"])
     def serve_reports(filename):
