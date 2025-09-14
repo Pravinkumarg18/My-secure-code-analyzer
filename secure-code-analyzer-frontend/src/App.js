@@ -920,7 +920,7 @@ const clearAllFiles = () => {
     className="sidebar-item"
     onClick={() => document.getElementById('file-upload-input').click()}
     style={{background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer'}}
-  >
+  > 
     <span className="sidebar-icon">📁</span>
     <span>Upload</span>
   </button>
@@ -969,9 +969,6 @@ const clearAllFiles = () => {
           </div>
         </div>
       )}
-      {/* Add this somewhere in your JSX */}
-
-      {/* Add this somewhere in your JSX for debugging */}
 
 
       {/* Main Content */}
@@ -1042,13 +1039,8 @@ security-scanner scan --all --output report.html`}
 
         {/* Dashboard Cards */}
         <div className="dashboard-cards">
-          {/* Upload Card */}
-          {/* Upload Card */}
-{/* Upload Card */}
-{/* Upload Card */}
-{/* Upload Card */}
-{/* Upload Card */}
-{/* Upload Card */}
+          
+
 <div className="dashboard-card upload-card">
   <div className="card-header">
     <h2>Upload Files</h2>
@@ -1188,7 +1180,6 @@ security-scanner scan --all --output report.html`}
             </div>
           </div>
 
-          {/* Download Card */}
           {/* Download Card */}
 <div className="dashboard-card download-card">
   <div className="card-icon">📥</div>
